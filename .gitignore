@@ -23,3 +23,10 @@ env/
 
 # OS
 .DS_Store
+
+# Secrets
+.env
+
+# Spotify OAuth cache
+.spotify_cache
+.cache*
