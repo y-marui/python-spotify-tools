@@ -19,7 +19,7 @@ class Track:
 
 
 def list_playlists(sp: spotipy.Spotify) -> list[Playlist]:
-    """Return all playlists owned or followed by the current user."""
+    """Return all playlists owned or followed by the current user, sorted by name."""
     items: list[Playlist] = []
     response = sp.current_user_playlists()
     while response:
@@ -30,7 +30,7 @@ def list_playlists(sp: spotipy.Spotify) -> list[Playlist]:
                 track_count=p["tracks"]["total"],
             ))
         response = sp.next(response) if response["next"] else None
-    return items
+    return sorted(items, key=lambda p: p.name.lower())
 
 
 def list_tracks(sp: spotipy.Spotify, playlist_id: str) -> list[Track]:
