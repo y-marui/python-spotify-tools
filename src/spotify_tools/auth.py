@@ -8,7 +8,8 @@ from spotipy.oauth2 import SpotifyOAuth
 
 load_dotenv()
 
-_config_env = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "spotify-tools"
+_xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+_config_env = _xdg_config / "spotify-tools"
 load_dotenv(_config_env)
 
 _SCOPES = " ".join([
