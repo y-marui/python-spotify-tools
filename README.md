@@ -14,7 +14,16 @@ Personal scripts to split an oversized Spotify playlist into new playlists organ
 
 Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add `http://localhost:8888/callback` as a Redirect URI.
 
-**2. Configure environment variables**
+**2. Configure credentials**
+
+If installed via `pipx`, place the credentials file at `~/.config/spotify-tools` (loaded automatically regardless of the current directory):
+
+~~~sh
+cp .env.example ~/.config/spotify-tools
+# Edit ~/.config/spotify-tools and fill in your Client ID / Client Secret
+~~~
+
+If running directly with `uv`, a `.env` in the current directory also works:
 
 ~~~sh
 cp .env.example .env
