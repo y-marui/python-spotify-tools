@@ -1,11 +1,16 @@
 """Spotify OAuth authentication."""
 import os
+from pathlib import Path
 
 import spotipy
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 
 load_dotenv()
+
+_xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+_config_env = _xdg_config / "spotify-tools"
+load_dotenv(_config_env)
 
 _SCOPES = " ".join([
     "playlist-read-private",

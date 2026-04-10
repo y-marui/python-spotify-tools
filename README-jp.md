@@ -14,7 +14,16 @@
 
 [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) でアプリを作成し、Redirect URI に `http://localhost:8888/callback` を追加する。
 
-**2. 環境変数を設定**
+**2. 認証情報を設定**
+
+`pipx` でインストールした場合は `~/.config/spotify-tools` に配置する（一度置けばどのディレクトリから実行しても読み込まれる）:
+
+~~~sh
+cp .env.example ~/.config/spotify-tools
+# ~/.config/spotify-tools を編集して Client ID / Client Secret を入力
+~~~
+
+`uv` で直接実行する場合はカレントディレクトリの `.env` でも可:
 
 ~~~sh
 cp .env.example .env
