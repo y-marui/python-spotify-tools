@@ -13,7 +13,7 @@
 
 1. **タイトル** — プロジェクト名
 2. **言語宣言** — 正本・参照の宣言（[LANGUAGE_POLICY.md](../LANGUAGE_POLICY.md) `### When Using Separate Files` 参照）
-3. **バッジ** — ライセンスバッジ必須 ＋ CI バッジ（GitHub Actions がある場合のみ）（§7 参照）
+3. **バッジ** — ライセンス → CI（GitHub Actions がある場合のみ）→ dev-charter（導入済みの場合）の順で配置（§7 参照）
 4. **一行概要** — 「何を・誰のために・どう解決するか」を 1 文で
 5. **セットアップ** — ビルド・インストール手順（§2 参照）
 6. **使い方** — 主なコマンド・操作フロー（§3 参照）
@@ -125,15 +125,7 @@ README のライセンスセクション・ライセンスバッジは選択し�
 
 ## 7. Badge Format
 
-バッジは**言語宣言の直後**（§1 位置 3）に配置する。
-
-**CI バッジ:**
-
-```
-[![CI](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml/badge.svg)](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml)
-```
-
-⚠️ テンプレートから作成した場合、CI バッジの URL はテンプレートリポジトリを指したままになる。**このプロジェクト固有の `{user}` / `{repo}` / `{workflow}` に必ず更新すること。**
+バッジは**言語宣言の直後**（§1 位置 3）に、**ライセンス → CI → dev-charter** の順で配置する。
 
 **ライセンスバッジ（プロジェクトの実際のライセンスに対応する行を使用）:**
 
@@ -151,6 +143,22 @@ README のライセンスセクション・ライセンスバッジは選択し�
 | CC BY-NC-ND 4.0 | `[![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](LICENSE)` |
 
 ライセンスバッジのリンク先は常にリポジトリルートの `LICENSE` ファイル。テンプレートと異なるライセンスを選択した場合はバッジも変更すること。
+
+**CI バッジ:**
+
+```
+[![CI](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml/badge.svg)](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml)
+```
+
+⚠️ テンプレートから作成した場合、CI バッジの URL はテンプレートリポジトリを指したままになる。**このプロジェクト固有の `{user}` / `{repo}` / `{workflow}` に必ず更新すること。**
+
+**dev-charter バッジ（dev-charter を導入済みの場合）:**
+
+```
+[![Charter Check](https://github.com/{user}/{repo}/actions/workflows/dev-charter-check.yml/badge.svg)](https://github.com/{user}/{repo}/actions/workflows/dev-charter-check.yml)
+```
+
+`{user}` / `{repo}` をこのプロジェクトのリポジトリ情報に置き換える。
 
 ---
 
@@ -186,6 +194,7 @@ README 作成・更新後に確認する。⚠️ は人間による確認が必
 ```
 [ ] 必須セクション（§1）が全て存在し、順序通りか
 [ ] CI バッジの URL がこのプロジェクトリポジトリを指しているか（テンプレートの URL のままになっていないか）
+[ ] dev-charter を導入済みの場合、charter-check バッジが存在するか（§7 参照）
 [ ] ライセンスバッジ・READMEライセンスセクション・LICENSE ファイルが三者一致しているか
 [ ] ⚠️ 一行概要がテンプレートの説明ではなくプロジェクト固有の説明になっているか
 [ ] ⚠️ セットアップ手順でプロジェクトが実際に動作するか（人間による動作確認）
