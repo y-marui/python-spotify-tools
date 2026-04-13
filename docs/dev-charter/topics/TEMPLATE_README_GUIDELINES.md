@@ -128,7 +128,7 @@ AGPL/GPL/LGPL を採用する場合の準 CLA 設定（`CONTRIBUTING.md` + PR �
 
 1. **タイトル** — `# [技術名] [種類] Template` の形式
 2. **言語宣言** — 正本・参照の宣言（[LANGUAGE_POLICY.md](../LANGUAGE_POLICY.md) `### When Using Separate Files` 参照）
-3. **バッジ** — ライセンスバッジ必須 ＋ CI バッジ（GitHub Actions がある場合のみ）（§5.3 参照）
+3. **バッジ** — ライセンス → CI（GitHub Actions がある場合のみ）→ dev-charter（導入済みの場合）の順で配置（§5.3 参照）
 4. **メタ情報テーブル** — 開発対象・開発環境・主言語・ライセンス（+ オプション: AI ツール・動作環境）
 5. **一行概要** — 「[技術スタック]で[開発対象]を作るためのテンプレート。[開発環境]向け。」
 6. **特徴** — 5〜8 項目、`✅` チェックマーク必須、技術名は具体的に
@@ -140,15 +140,7 @@ AGPL/GPL/LGPL を採用する場合の準 CLA 設定（`CONTRIBUTING.md` + PR �
 
 ### 5.3 Badge Format
 
-バッジは**言語宣言の直後**（§5.2 位置 3）に配置する。テンプレートリポジトリ固有の URL・ライセンス種別に合わせて記述すること。
-
-**CI バッジ:**
-
-```
-[![CI](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml/badge.svg)](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml)
-```
-
-`{user}` / `{repo}` / `{workflow}` をこのテンプレートリポジトリの値に置き換える。ワークフローファイルが複数ある場合はメインの CI ワークフローのみ掲載する。
+バッジは**言語宣言の直後**（§5.2 位置 3）に、**ライセンス → CI → dev-charter** の順で配置する。
 
 **ライセンスバッジ（§4 のライセンス選択に対応する行を使用）:**
 
@@ -166,6 +158,22 @@ AGPL/GPL/LGPL を採用する場合の準 CLA 設定（`CONTRIBUTING.md` + PR �
 | CC BY-NC-ND 4.0 | `[![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](LICENSE)` |
 
 ライセンスバッジのリンク先は常にリポジトリルートの `LICENSE` ファイル。
+
+**CI バッジ:**
+
+```
+[![CI](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml/badge.svg)](https://github.com/{user}/{repo}/actions/workflows/{workflow}.yml)
+```
+
+`{user}` / `{repo}` / `{workflow}` をこのテンプレートリポジトリの値に置き換える。ワークフローファイルが複数ある場合はメインの CI ワークフローのみ掲載する。
+
+**dev-charter バッジ（dev-charter を導入済みの場合）:**
+
+```
+[![Charter Check](https://github.com/{user}/{repo}/actions/workflows/dev-charter-check.yml/badge.svg)](https://github.com/{user}/{repo}/actions/workflows/dev-charter-check.yml)
+```
+
+`{user}` / `{repo}` をこのテンプレートリポジトリのリポジトリ情報に置き換える。
 
 ### 5.4 Conditional Sections
 
@@ -205,6 +213,7 @@ README 作成後、以下を確認する。
 [ ] 言語宣言が主言語（日本語 / 英語）と一致しているか
 [ ] セクションヘッダが英語か（日本語文書でも）
 [ ] CI バッジの URL がこのテンプレートリポジトリを指しているか
+[ ] dev-charter を導入済みの場合、charter-check バッジが存在するか（§5.3 参照）
 [ ] ライセンスバッジが §4 のライセンス選択と一致しているか
 [ ] メタ情報テーブルに開発対象・開発環境・主言語・ライセンスの 4 フィールドがあるか
 [ ] 特徴セクションが 5〜8 項目か
@@ -231,3 +240,9 @@ README 作成後、以下を確認する。
 7. AI 対応の場合は `AI_CONTEXT.md`・`CLAUDE.md`・`GEMINI.md` を作成する
 8. `.github/copilot-instructions.md` を作成する（Copilot 使用時）
 9. GitHub 公開プロジェクトの場合は `.github/FUNDING.yml` を作成する（[MONETIZATION_POLICY.md](../MONETIZATION_POLICY.md) 参照）
+
+> **Note（dev-charter を含むテンプレートの場合）:**
+> GitHub テンプレートはファイルのみコピーし git 履歴を引き継がないため、
+> テンプレートから作成したプロジェクトでは `git subtree pull` による dev-charter 更新が失敗する。
+> `check-charter.yml` ワークフローがこのケースを自動検出して対処するため、手動対応は不要。
+> 手動更新が必要な場合は [README-jp.md](../README-jp.md) の **Update** セクションを参照。

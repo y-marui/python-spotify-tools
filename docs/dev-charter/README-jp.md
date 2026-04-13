@@ -4,6 +4,7 @@
 > 英語版（参照）は [README.md](README.md) を参照してください。
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
+[![check-charter CI](https://github.com/y-marui/dev-charter/actions/workflows/check-charter.yml/badge.svg)](https://github.com/y-marui/dev-charter/actions/workflows/check-charter.yml)
 
 AI支援ソフトウェアプロジェクトのための共有開発憲章。
 
@@ -14,6 +15,7 @@ AI支援ソフトウェアプロジェクトのための共有開発憲章。
 
 | ファイル | 内容 |
 |---|---|
+| [CHARTER_INDEX.md](CHARTER_INDEX.md) | 憲章ドキュメントのインデックス（トピック → ファイル対応表） |
 | [PRINCIPLES.md](PRINCIPLES.md) | 開発哲学・デザイン・アーキテクチャ原則 |
 | [CODE_STYLE.md](CODE_STYLE.md) | コードスタイル |
 | [AI_COLLABORATION_RULES.md](AI_COLLABORATION_RULES.md) | AI 協働ルールと役割分担 |
@@ -31,6 +33,8 @@ AI支援ソフトウェアプロジェクトのための共有開発憲章。
 | [topics/GITHUB_CONTRIBUTING.md](topics/GITHUB_CONTRIBUTING.md) | Issue・PR・CONTRIBUTING.md・PRテンプレート・準CLA（OSS向け） |
 | [topics/TEMPLATE_README_GUIDELINES.md](topics/TEMPLATE_README_GUIDELINES.md) | GitHub テンプレートリポジトリの README 設計規約（開発環境・言語・LICENSE・必須セクション） |
 | [topics/PROJECT_README_GUIDELINES.md](topics/PROJECT_README_GUIDELINES.md) | テンプレートから作成したプロジェクトの README 整備手順 |
+| [topics/PYTHON_DEV_ENV.md](topics/PYTHON_DEV_ENV.md) | Python 開発環境構成（pyenv・uv・ruff・mypy・pytest） |
+| [topics/PYTHON_CLI.md](topics/PYTHON_CLI.md) | Python CLI 実装方針（typer・pydantic-settings・XDG設定） |
 
 ## How to Use
 
@@ -40,6 +44,20 @@ AI支援ソフトウェアプロジェクトのための共有開発憲章。
 
 構成仕様は [AI_TOOL_SETUP.md](AI_TOOL_SETUP.md) を参照。
 
+## Quick Install
+
+プロジェクトのルートで実行してください：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/y-marui/dev-charter/main/scripts/install.sh)
+```
+
+スクリプトが git subtree のセットアップを自動化し、Claude Code が利用可能であれば
+初回セットアップ（INSTALL_CHECKLIST）の起動まで案内します。
+
+> **Note:** インストール先やブランチを変更する場合は環境変数で指定できます：
+> `CHARTER_PREFIX=path/to/charter bash <(curl -fsSL .../install.sh)`
+
 ## Install (git subtree)
 
 ```
@@ -48,19 +66,10 @@ git fetch dev-charter
 git subtree add --prefix=docs/dev-charter dev-charter main --squash
 ```
 
-インストール後、以下のプロンプトを AI に貼り付けて実行する：
+インストール後、以下のプロンプトを AI ツールに貼り付けてください：
 
 ```
-docs/dev-charter/ 内の全ファイルを読み、このプロジェクトを調査した上で、以下を実施してください。
-
-1. docs/dev-charter/AI_TOOL_SETUP.md の仕様に従い AI コンテキストファイルをセットアップする
-2. 憲章の要件とプロジェクトの現状を照合し、満たせていない箇所を特定・修正する
-   （例：CI 設定の不足、セキュリティフックの未設定、CONTRIBUTING.md の欠如 等）
-   大きなスコープになる場合は修正前にユーザーに確認する
-
-- 不明点・確認事項は作業前に 1 回まとめて質問する
-- 憲章と既存規約が矛盾する場合は矛盾点を列挙し、優先順位をユーザーに確認してから進める
-- 完了後はコミットしない（ユーザーが確認してから行う）
+docs/dev-charter/INSTALL_CHECKLIST.md を実行して
 ```
 
 ## Update
@@ -69,32 +78,89 @@ docs/dev-charter/ 内の全ファイルを読み、このプロジェクトを�
 
 ```
 git remote add dev-charter https://github.com/y-marui/dev-charter
-```
-
-```
 git subtree pull --prefix=docs/dev-charter dev-charter main --squash
 ```
 
-更新後、以下のプロンプトを AI に貼り付けて実行する：
+> **Note（テンプレートリポジトリから作成したプロジェクト）:**
+> GitHub テンプレートはファイルのみコピーし git 履歴を引き継がないため、`git subtree pull` は失敗します。
+> `check-charter.yml` ワークフローがこのケースを自動検出して対処します。
+> 手動で更新する場合は `git subtree pull` の代わりに以下を実行してください：
+> ```bash
+> git remote add dev-charter https://github.com/y-marui/dev-charter || true
+> git fetch dev-charter
+> SPLIT=$(git rev-parse dev-charter/main)
+> git rm -rf docs/dev-charter/
+> mkdir -p docs/dev-charter/
+> git archive dev-charter/main | tar -x -C docs/dev-charter/
+> git add docs/dev-charter/
+> git commit -m "Squashed 'docs/dev-charter/' content from commit ${SPLIT}
+>
+> git-subtree-dir: docs/dev-charter
+> git-subtree-split: ${SPLIT}"
+> ```
+
+更新後、以下のプロンプトを AI ツールに貼り付けてください：
 
 ```
-docs/dev-charter/ 内の全ファイルを読み、憲章の変更が影響する箇所のみ更新してください。
-
-1. docs/dev-charter/AI_TOOL_SETUP.md の仕様に従い AI コンテキストファイルを更新する
-2. 憲章の変更がプロジェクトファイル（CI 設定・セキュリティフック等）に影響する場合は修正する
-
-- プロジェクト全体の再調査は不要
-- AI_CONTEXT.md が存在しない場合はインストール用プロンプトを使うこと
-- 憲章の変更がプロジェクト固有ルールと矛盾する場合は矛盾点を列挙してユーザーに確認する
-- 完了後はコミットしない（ユーザーが確認してから行う）
+docs/dev-charter/UPDATE_CHECKLIST.md を実行して
 ```
 
 ## Makefile Helper
 
 ```
 update-charter:
+	git remote | grep -q '^dev-charter$$' || \
+	  git remote add dev-charter https://github.com/y-marui/dev-charter
+	git fetch dev-charter
 	git subtree pull --prefix=docs/dev-charter dev-charter main --squash
 ```
+
+## Version Check (CI)
+
+`.github/workflows/dev-charter-check.yml` をプロジェクトに追加すると、
+毎週自動で最新バージョンを確認し、古い場合は update PR を作成します。
+
+```yaml
+name: Dev Charter
+on:
+  schedule:
+    - cron: "23 3 * * 1"  # 毎週月曜 3:23 UTC — minute/hour/day-of-week はランダムな値に変更してください
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check
+    uses: y-marui/dev-charter/.github/workflows/check-charter.yml@main
+    with:
+      fail_if_outdated: true
+    permissions:
+      contents: write
+      pull-requests: write
+```
+
+> **Note:** Branch Protection で direct push が禁止されている場合は、
+> GitHub Actions bot の bypass rule を追加してください
+> （Settings > Rules > Rulesets > Bypass list > GitHub Actions）。
+
+## Badge for Adopting Projects
+
+プロジェクトの README にこのバッジを追加すると、dev-charter の更新状態を可視化できます。
+
+### Workflow Status Badge
+
+dev-charter が最新かどうかを表示します。バッジが機能するには上記ワークフローに `fail_if_outdated: true` が必要です。
+
+```markdown
+[![Charter Check](https://github.com/{owner}/{repo}/actions/workflows/dev-charter-check.yml/badge.svg)](https://github.com/{owner}/{repo}/actions/workflows/dev-charter-check.yml)
+```
+
+`{owner}` と `{repo}` を自分のリポジトリのオーナー名・リポジトリ名に置き換えてください。
+
+| 状態 | Status Badge |
+|---|---|
+| 未導入 / CI 未設定 | 赤（VERSION not found） |
+| 導入済み・最新 | 緑 |
+| 導入済み・更新必要 | 赤 |
 
 ---
 
