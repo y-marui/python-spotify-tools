@@ -58,6 +58,8 @@ API → Service → Repository
 
 ## Applied Charter Principles
 
+憲章参照: `docs/dev-charter/CHARTER_INDEX.md` でトピックを特定してから該当ファイルのみ読む。
+
 ### Pre-Coding Checklist
 
 不明・未定の項目があれば**作業前に1回でまとめて**質問する。推測で進めない。
