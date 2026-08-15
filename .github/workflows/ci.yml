@@ -10,7 +10,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"] # EOLまで6ヶ月以上あるバージョン
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync
