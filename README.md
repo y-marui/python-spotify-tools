@@ -1,77 +1,154 @@
-# python-spotify-tools
+# Dev Charter
 
 > **This is the reference (English) version.**
-> The canonical (Japanese) version is [README-jp.md](README-jp.md).
+> For the canonical (Japanese) version, see [README-jp.md](README-jp.md).
 
-[![CI](https://github.com/y-marui/python-spotify-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/y-marui/python-spotify-tools/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
+[![check-charter CI](https://github.com/y-marui/dev-charter/actions/workflows/check-charter.yml/badge.svg)](https://github.com/y-marui/dev-charter/actions/workflows/check-charter.yml)
 
-Personal scripts to split an oversized Spotify playlist into new playlists organized by use case.
+Shared development charter for AI-assisted software projects.
 
-## Setup
+This repository defines common philosophy, architecture principles,
+and development rules used across projects.
 
-**1. Create a Spotify app**
+## Documents
 
-Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add `http://localhost:8888/callback` as a Redirect URI.
+See the canonical [CHARTER_INDEX.md](CHARTER_INDEX.md) for the complete document list and topic-to-file lookup table.
 
-**2. Configure credentials**
+## How to Use
 
-If installed via `pipx`, place the credentials file at `~/.config/spotify-tools` (loaded automatically regardless of the current directory):
+1. Pull dev-charter into `docs/dev-charter/` via `git subtree`
+2. Have the AI read the charter and generate `AI_CONTEXT.md` and agent config files at the project root
+3. After charter updates, run `git subtree pull` and have the AI sync the context files
 
-~~~sh
-cp .env.example ~/.config/spotify-tools
-# Edit ~/.config/spotify-tools and fill in your Client ID / Client Secret
-~~~
+See [AI_TOOL_SETUP.md](AI_TOOL_SETUP.md) for the structure spec.
 
-If running directly with `uv`, a `.env` in the current directory also works:
+## Quick Install
 
-~~~sh
-cp .env.example .env
-# Edit .env and fill in your Client ID / Client Secret
-~~~
+Run from your project root:
 
-**3. Install dependencies**
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/y-marui/dev-charter/main/scripts/install.sh)
+```
 
-~~~sh
-uv sync
-~~~
+The script automates the git subtree setup and, if Claude Code is available,
+guides you through the initial setup (INSTALL_CHECKLIST).
 
-## Configuration
+> **Note:** To customize the install path or branch, use environment variables:
+> `CHARTER_PREFIX=path/to/charter bash <(curl -fsSL .../install.sh)`
 
-| Variable | Description |
+## Install (git subtree)
+
+```
+git remote add dev-charter https://github.com/y-marui/dev-charter
+git fetch dev-charter
+git subtree add --prefix=docs/dev-charter dev-charter main --squash
+```
+
+After installing, paste the following prompt into your AI tool:
+
+```
+Run docs/dev-charter/INSTALL_CHECKLIST.md
+```
+
+## Update
+
+If the `dev-charter` remote is not set up (e.g., after cloning the project), add it first:
+
+```
+git remote add dev-charter https://github.com/y-marui/dev-charter
+git subtree pull --prefix=docs/dev-charter dev-charter main --squash
+```
+
+> **Note (projects created from a template repository):**
+> GitHub templates copy files only — git history is not carried over — so `git subtree pull` will fail.
+> The `check-charter.yml` workflow detects this automatically and handles it.
+> For manual updates, use the following instead of `git subtree pull`:
+> ```bash
+> git remote add dev-charter https://github.com/y-marui/dev-charter || true
+> git fetch dev-charter
+> SPLIT=$(git rev-parse dev-charter/main)
+> rm -rf docs/dev-charter/
+> mkdir -p docs/dev-charter/
+> git archive dev-charter/main | tar -x -C docs/dev-charter/
+> git add docs/dev-charter/
+> git commit -m "Squashed 'docs/dev-charter/' content from commit ${SPLIT}
+>
+> git-subtree-dir: docs/dev-charter
+> git-subtree-split: ${SPLIT}"
+> ```
+
+After updating, paste the following prompt into your AI tool:
+
+```
+Run docs/dev-charter/UPDATE_CHECKLIST.md
+```
+
+## Makefile helper
+
+```
+update-charter:
+	git remote | grep -q '^dev-charter$$' || \
+	  git remote add dev-charter https://github.com/y-marui/dev-charter
+	git fetch dev-charter
+	git subtree pull --prefix=docs/dev-charter dev-charter main --squash
+```
+
+## Version Check (CI)
+
+Add `.github/workflows/dev-charter-check.yml` to your project to check for updates
+when a PR is opened or a commit is pushed to main, and open an update PR if outdated
+(the check is skipped if one already succeeded within the last 7 days, so busy repos
+don't re-check on every single event).
+
+```yaml
+name: Dev Charter
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check
+    if: github.actor != 'dependabot[bot]'
+    uses: y-marui/dev-charter/.github/workflows/check-charter.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+```
+
+> **Note:** Dependabot PRs are skipped — dependency-only activity doesn't warrant a
+> charter check. If your repository goes fully quiet, no check will run. If you want a
+> guaranteed periodic check regardless of activity, add a low-frequency `schedule`
+> (e.g. monthly) alongside this.
+
+> **Note:** If your repository has Branch Protection rules that prevent direct pushes,
+> add a bypass rule for the GitHub Actions bot
+> (Settings > Rules > Rulesets > Bypass list > GitHub Actions).
+
+## Badge for Adopting Projects
+
+Place this badge in your project README to show dev-charter update health.
+
+### Workflow Status Badge
+
+Shows whether dev-charter is up to date.
+
+```markdown
+[![Charter Check](https://github.com/{owner}/{repo}/actions/workflows/dev-charter-check.yml/badge.svg)](https://github.com/{owner}/{repo}/actions/workflows/dev-charter-check.yml)
+```
+
+Replace `{owner}` and `{repo}` with your GitHub organization and repository name.
+
+| State | Status Badge |
 |---|---|
-| `SPOTIFY_CLIENT_ID` | Spotify app Client ID |
-| `SPOTIFY_CLIENT_SECRET` | Spotify app Client Secret |
-| `SPOTIFY_REDIRECT_URI` | OAuth callback URI (default: `http://localhost:8888/callback`) |
-
-## Usage
-
-~~~sh
-uv run split-playlist
-~~~
-
-On first run, a browser window opens for OAuth authentication. The token is cached and auto-refreshed on subsequent runs.
-
-**Workflow:**
-
-1. Select the source playlist by number
-2. Review the track list and enter track numbers to move (e.g. `1,3,5-8`)
-3. Select or create a target playlist
-4. Confirm to execute
-
-## Commands
-
-| Command | Description |
-|---|---|
-| `make install` | Install dependencies (`uv sync`) |
-| `make lint` | Linting (`ruff check .`) |
-| `make type` | Type checking (`mypy src`) |
-| `make test` | Run tests (`pytest`) |
-| `make all` | lint + type + test |
-
-## License
-
-MIT License — see [LICENSE](LICENSE)
+| Not installed / CI not set up | red (VERSION not found) |
+| Installed, up to date | green |
+| Installed, outdated | red |
 
 ---
+
 *This document has a Japanese canonical version [README-jp.md](README-jp.md). Update both in the same commit when editing.*
