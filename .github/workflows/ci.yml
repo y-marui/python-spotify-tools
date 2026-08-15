@@ -2,15 +2,25 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: Build
+  test:
+    name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"] # EOLまで6ヶ月以上あるバージョン
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - run: uv sync
       - run: uv run ruff check .
       - run: uv run mypy src
       - run: uv run pytest
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All Test matrix jobs passed."

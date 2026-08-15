@@ -173,6 +173,8 @@ CI（GitHub Actions）は push / PR のたびに `ruff check` → `mypy src` →
 | check-added-large-files | 500 KB 超ファイルをブロック |
 | trailing-whitespace / end-of-file-fixer | 空白・改行の正規化 |
 | check-yaml / check-json / check-merge-conflict | 構文・競合チェック |
+| check-local-charter-version | ローカルの `../dev-charter` チェックアウトとの `VERSION` 差分をチェック（sibling が新しい場合はブロック、古い場合は警告） |
+| check-markdown-heading-language | Markdown の H2〜H6 見出しに日本語が使われていないか検証 |
 | shellcheck | シェルスクリプト静的解析 |
 
 **セキュリティの二層構造:**
@@ -192,18 +194,19 @@ pre-commit run --all-files  # 動作確認（必須）
 ```
 
 **コードレビュー要件:**
-- `main` に到達するコミットは必ず他の開発者がレビューする
+- `main` に到達するコミットは独立した確認を受ける。複数人開発では別の開発者の承認を必須とし、個人開発では実装担当と異なる AI によるレビューとオーナーの最終確認で代替できる
 - 認証・認可・暗号化・データアクセスに関わる変更はセキュリティレビューを必須とする
 
 ---
 
 ## AI Tool Assignments
 
-| ツール | 担当範囲 |
-|---|---|
-| **Claude Code** | プロジェクト立ち上げ、大規模なコード変更、アーキテクチャ設計・リファクタリング提案 |
-| **GitHub Copilot** | バグ修正、細かな実装・コーディング補助、単体テスト作成 |
-| **Gemini CLI** | プライバシーポリシー作成・更新、ストア説明文、審査用ドキュメント、プロジェクト全体のドキュメント管理 |
+- **使用ツール**：Claude Code、GitHub Copilot、Gemini CLI
+- **標準担当の正本**：`docs/dev-charter/AI_COLLABORATION_RULES.md` の「AI Tool Responsibilities」と「Rules for Multi-AI Usage」
+- **このリポジトリ固有の上書き**：
+  - Codex 未使用のため、標準で Codex が担当するバグ修正・コードレビューは GitHub Copilot が兼務する
+  - GitHub Copilot: 単体テスト作成も担当する
+  - Gemini CLI: プライバシーポリシー作成・更新、ストア説明文、審査用ドキュメントに加え、プロジェクト全体のドキュメント管理も担当する
 
 **AI_CONTEXT.md の同期ルール:**
 - 憲章（`docs/dev-charter/`）を `git subtree pull` で更新した後、AI に差分を確認させて `AI_CONTEXT.md` を更新する

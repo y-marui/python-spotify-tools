@@ -77,6 +77,30 @@ repos:
           )
 
   # ----------------------------------------------------------------
+  # Local dev-charter version check
+  # (blocks if sibling ../dev-charter is newer, warns if older)
+  # ----------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: check-local-charter-version
+        name: Check local dev-charter version
+        language: script
+        entry: scripts/check-local-charter-version.sh
+        pass_filenames: false
+        always_run: true
+
+  # ----------------------------------------------------------------
+  # Markdown section headings
+  # ----------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: check-markdown-heading-language
+        name: Check Markdown section heading language
+        language: script
+        entry: scripts/check-markdown-heading-language.sh
+        files: '\.md$'
+
+  # ----------------------------------------------------------------
   # Shell scripts
   # ----------------------------------------------------------------
   - repo: https://github.com/shellcheck-py/shellcheck-py
