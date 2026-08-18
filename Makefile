@@ -21,4 +21,10 @@ setup-charter:
 	git subtree add --prefix=docs/dev-charter dev-charter main --squash
 
 update-charter:
-	git subtree pull --prefix=docs/dev-charter dev-charter main --squash
+	@STASHED=0; \
+	if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$$(git ls-files --others --exclude-standard)" ]; then \
+		git stash push -u -m "update-charter"; \
+		STASHED=1; \
+	fi; \
+	git subtree pull --prefix=docs/dev-charter dev-charter main --squash; \
+	if [ "$$STASHED" = "1" ]; then git stash pop; fi
