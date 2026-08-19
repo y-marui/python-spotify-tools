@@ -33,6 +33,23 @@ jobs:
               - '!.github/workflows/dev-charter-check.yml'
               - '!.github/workflows/auto-assign-self.yml'
 
+  security:
+    name: Security scan (pre-commit)
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: pre-commit/action@v3.0.1
+        env:
+          # powershell-lint is a local-only convenience check (see
+          # .pre-commit-config.yaml); it isn't required to gate merges.
+          SKIP: powershell-lint
+
   test:
     name: Test
     needs: changes
@@ -53,7 +70,7 @@ jobs:
 
   build:
     name: Build
-    needs: [changes, test]
+    needs: [changes, security, test]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -61,12 +78,16 @@ jobs:
 
   gate:
     name: Required Checks
-    needs: [changes, test, build]
+    needs: [changes, security, test, build]
     if: always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     steps:
       - name: Verify required jobs succeeded
         run: |
+          if [ "${{ needs.security.result }}" != "success" ]; then
+            echo "::error::security did not succeed (got: ${{ needs.security.result }})"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.code }}" != "true" ]; then
             echo "docs/config-only change; nothing further to verify"
             exit 0
