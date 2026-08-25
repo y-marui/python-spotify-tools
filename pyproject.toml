@@ -12,6 +12,7 @@ dependencies = [
 [project.scripts]
 split-playlist = "spotify_tools.split_playlist:main"
 find-duplicates = "spotify_tools.find_duplicates:main"
+spotify-inventory = "spotify_tools.inventory_cli:main"
 
 [dependency-groups]
 dev = [

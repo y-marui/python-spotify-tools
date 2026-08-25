@@ -28,5 +28,5 @@ env/
 .env
 
 # Spotify OAuth cache
-.spotify_cache
+.spotify_cache*
 .cache*
