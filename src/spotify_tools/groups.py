@@ -116,10 +116,11 @@ def is_safe_new_target(
     """Return whether a playlist just created in this session may be used
     as a move target.
 
-    Unlike is_modifiable, an unmatched name is allowed here — a brand-new
-    playlist can't already appear in the rules file. It's still rejected if
-    its id/name happens to collide with a protected or ambiguous rule (e.g.
-    the user named it after an existing protected playlist).
+    Unlike is_modifiable, an unmatched id/name is allowed here — a
+    brand-new playlist's id can't already be in the rules file, and it's
+    fine if its name isn't there either. It's still rejected if its name
+    happens to collide with a protected or ambiguous rule (e.g. the user
+    named it after an existing protected playlist).
     """
     if not rules:
         return True
