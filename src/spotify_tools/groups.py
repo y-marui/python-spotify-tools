@@ -67,16 +67,22 @@ def _parse_rule(entry: dict[str, object]) -> PlaylistRule:
     )
 
 
-def classify(
+def _matching_groups(
     playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
-) -> str | None:
-    """Return the playlist's group name, or None if unclassified/ambiguous."""
-    groups = {
+) -> set[str]:
+    return {
         r.group
         for r in rules
         if (r.id is not None and r.id == playlist_id)
         or (r.name is not None and r.name == playlist_name)
     }
+
+
+def classify(
+    playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
+) -> str | None:
+    """Return the playlist's group name, or None if unclassified/ambiguous."""
+    groups = _matching_groups(playlist_id, playlist_name, rules)
     return next(iter(groups)) if len(groups) == 1 else None
 
 
@@ -101,4 +107,35 @@ def require_modifiable(
     if not is_modifiable(playlist_id, playlist_name, rules):
         raise ProtectedPlaylistError(
             f"'{playlist_name}' is protected or unclassified; refusing to modify."
+        )
+
+
+def is_safe_new_target(
+    playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
+) -> bool:
+    """Return whether a playlist just created in this session may be used
+    as a move target.
+
+    Unlike is_modifiable, an unmatched name is allowed here — a brand-new
+    playlist can't already appear in the rules file. It's still rejected if
+    its id/name happens to collide with a protected or ambiguous rule (e.g.
+    the user named it after an existing protected playlist).
+    """
+    if not rules:
+        return True
+    groups = _matching_groups(playlist_id, playlist_name, rules)
+    if PROTECTED_GROUP in groups:
+        return False
+    return len(groups) <= 1
+
+
+def require_safe_new_target(
+    playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
+) -> None:
+    """Raise ProtectedPlaylistError if a newly created playlist collides
+    with a protected or ambiguous group rule."""
+    if not is_safe_new_target(playlist_id, playlist_name, rules):
+        raise ProtectedPlaylistError(
+            f"'{playlist_name}' collides with a protected/ambiguous group "
+            "rule; refusing to use as a new target."
         )

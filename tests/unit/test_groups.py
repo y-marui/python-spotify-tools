@@ -9,8 +9,10 @@ from spotify_tools.groups import (
     ProtectedPlaylistError,
     classify,
     is_modifiable,
+    is_safe_new_target,
     load_rules,
     require_modifiable,
+    require_safe_new_target,
 )
 
 
@@ -107,3 +109,36 @@ def test_require_modifiable_raises_for_protected_playlist() -> None:
 def test_require_modifiable_passes_silently_when_allowed() -> None:
     rules = [PlaylistRule(group="active", id="id-1")]
     require_modifiable("id-1", "Anything", rules)
+
+
+def test_is_safe_new_target_ignores_guard_when_no_rules_configured() -> None:
+    assert is_safe_new_target("new-id", "Anything", []) is True
+
+
+def test_is_safe_new_target_allows_genuinely_new_playlist() -> None:
+    rules = [PlaylistRule(group="protected", id="other-id", name="Other")]
+    assert is_safe_new_target("new-id", "Brand New Playlist", rules) is True
+
+
+def test_is_safe_new_target_rejects_name_collision_with_protected_rule() -> None:
+    rules = [PlaylistRule(group="protected", name="Family Shared")]
+    assert is_safe_new_target("new-id", "Family Shared", rules) is False
+
+
+def test_is_safe_new_target_rejects_ambiguous_name_collision() -> None:
+    rules = [
+        PlaylistRule(group="active", name="Shared Name"),
+        PlaylistRule(group="future_target", name="Shared Name"),
+    ]
+    assert is_safe_new_target("new-id", "Shared Name", rules) is False
+
+
+def test_require_safe_new_target_raises_for_protected_name_collision() -> None:
+    rules = [PlaylistRule(group="protected", name="Family Shared")]
+    with pytest.raises(ProtectedPlaylistError):
+        require_safe_new_target("new-id", "Family Shared", rules)
+
+
+def test_require_safe_new_target_passes_for_genuinely_new_playlist() -> None:
+    rules = [PlaylistRule(group="protected", id="other-id")]
+    require_safe_new_target("new-id", "Brand New Playlist", rules)

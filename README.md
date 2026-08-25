@@ -124,7 +124,8 @@ note = "Split into seasonal playlists after New Year"
 - If the config file doesn't exist, the guard is inactive — every playlist can be selected as a move source or target as before
 - If it exists, playlists in the `protected` group are excluded from both source and target selection, and rejected again right before the move executes
 - If it exists, a playlist that matches neither `id` nor `name` (unclassified), or matches more than one differing group (ambiguous), is excluded and rejected the same way
-- A playlist created on the fly during a split (as the new target) is exempt from the unclassified guard, since it was just created in that session
+- A playlist created on the fly during a split (as the new target) is exempt from the unclassified guard for *being unclassified*, but is still rejected if its name collides with a `protected` or ambiguous rule
+- Once the guard is active, Liked Songs is subject to it too: add a rule with `name = "Liked Songs"` to your config if you want to keep selecting it as a move source
 
 **Verification and known limits:**
 

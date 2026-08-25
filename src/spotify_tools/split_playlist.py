@@ -9,6 +9,7 @@ from spotify_tools.groups import (
     is_modifiable,
     load_rules,
     require_modifiable,
+    require_safe_new_target,
 )
 from spotify_tools.playlist import (
     LIKED_SONGS_ID,
@@ -106,6 +107,8 @@ def _confirm_and_move(
     require_modifiable(source.id, source.name, rules)
     if target.id in existing_target_ids:
         require_modifiable(target.id, target.name, rules)
+    else:
+        require_safe_new_target(target.id, target.name, rules)
 
     uris = [t.uri for t in selected]
     print("Adding tracks to target…")

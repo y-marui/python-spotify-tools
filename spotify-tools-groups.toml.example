@@ -36,3 +36,9 @@ note = "Split into seasonal playlists after New Year"
 [[playlists]]
 name = "Workout Mix"
 group = "active"
+
+# Once this file exists, the guard applies to Liked Songs too — add a rule
+# like this if you want to keep selecting it as a move source.
+[[playlists]]
+name = "Liked Songs"
+group = "active"

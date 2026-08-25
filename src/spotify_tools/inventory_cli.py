@@ -71,7 +71,7 @@ def _format_playlists_markdown(playlists: list[PlaylistInfo]) -> str:
     ]
     for p in playlists:
         name = _escape_md(p.name) + (" (Liked Songs)" if p.is_liked_songs else "")
-        group = p.group or "(unclassified)"
+        group = _escape_md(p.group) if p.group else "(unclassified)"
         lines.append(
             f"| {p.id} | {name} | {_escape_md(p.owner)} | {p.public} | "
             f"{p.track_count} | {group} | {_escape_md(p.description)} | {p.url} | "
