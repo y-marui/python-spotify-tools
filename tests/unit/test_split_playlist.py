@@ -157,3 +157,24 @@ def test_confirm_and_move_allows_newly_created_target(
     _confirm_and_move(sp, source, new_target, selected, rules, set())  # type: ignore[arg-type]
 
     assert sp.added_playlist == [("new-id", ["spotify:track:1"])]
+
+
+def test_confirm_and_move_blocks_new_target_colliding_with_protected_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A newly created playlist isn't exempt from the guard if its name
+    collides with a protected rule (e.g. the user named it after an
+    existing protected playlist)."""
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    sp = FakeSpotify()
+    source = Playlist(id="src", name="Source", track_count=0)
+    new_target = Playlist(id="new-id", name="Family Shared", track_count=0)
+    rules = [
+        PlaylistRule(group="active", id="src"),
+        PlaylistRule(group="protected", name="Family Shared"),
+    ]
+
+    with pytest.raises(ProtectedPlaylistError):
+        _confirm_and_move(sp, source, new_target, [], rules, set())  # type: ignore[arg-type]
+
+    assert sp.added_playlist == []

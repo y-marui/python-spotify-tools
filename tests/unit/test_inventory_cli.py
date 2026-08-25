@@ -1,5 +1,6 @@
 """Tests for inventory CLI filtering, formatting, and argument parsing."""
 import json
+from dataclasses import replace
 
 from spotify_tools.inventory import PlaylistInfo, TrackInfo
 from spotify_tools.inventory_cli import (
@@ -58,6 +59,21 @@ def test_format_playlists_markdown_escapes_pipe_and_flags_liked_songs() -> None:
     lines = output.splitlines()
     assert "a\\|b" in lines[2]
     assert "Liked Songs (Liked Songs)" in lines[3]
+
+
+def test_format_playlists_markdown_escapes_pipe_in_group_column() -> None:
+    playlist = replace(_BETA, group="team|shared")
+
+    output = _format_playlists_markdown([playlist])
+
+    assert "team\\|shared" in output.splitlines()[2]
+    assert "team|shared" not in output.splitlines()[2]
+
+
+def test_format_playlists_markdown_shows_unclassified_when_no_group() -> None:
+    output = _format_playlists_markdown([_BETA])
+
+    assert "(unclassified)" in output.splitlines()[2]
 
 
 def test_format_tracks_markdown_includes_local_flag() -> None:
