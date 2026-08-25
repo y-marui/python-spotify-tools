@@ -4,6 +4,12 @@ import sys
 import spotipy
 
 from spotify_tools.auth import get_client
+from spotify_tools.groups import (
+    PlaylistRule,
+    is_modifiable,
+    load_rules,
+    require_modifiable,
+)
 from spotify_tools.playlist import (
     LIKED_SONGS_ID,
     Playlist,
@@ -17,6 +23,12 @@ from spotify_tools.playlist import (
     remove_saved_tracks,
     remove_tracks,
 )
+
+
+def _filter_modifiable(
+    playlists: list[Playlist], rules: list[PlaylistRule]
+) -> list[Playlist]:
+    return [p for p in playlists if is_modifiable(p.id, p.name, rules)]
 
 
 def _fetch_source_tracks(sp: spotipy.Spotify, source: Playlist) -> list[Track]:
@@ -77,8 +89,35 @@ def _select_target(sp: spotipy.Spotify, playlists: list[Playlist]) -> Playlist:
         print("  Invalid input. Try again.")
 
 
+def _confirm_and_move(
+    sp: spotipy.Spotify,
+    source: Playlist,
+    target: Playlist,
+    selected: list[Track],
+    rules: list[PlaylistRule],
+    existing_target_ids: set[str],
+) -> None:
+    print(f"\nMove {len(selected)} track(s): '{source.name}' → '{target.name}'")
+    confirm = input("Proceed? [y/N] ").strip().lower()
+    if confirm != "y":
+        print("Cancelled.")
+        sys.exit(0)
+
+    require_modifiable(source.id, source.name, rules)
+    if target.id in existing_target_ids:
+        require_modifiable(target.id, target.name, rules)
+
+    uris = [t.uri for t in selected]
+    print("Adding tracks to target…")
+    add_tracks(sp, target.id, uris)
+    print("Removing tracks from source…")
+    _remove_from_source(sp, source, uris)
+    print(f"Done. {len(selected)} track(s) moved to '{target.name}'.")
+
+
 def main() -> None:
     sp = get_client()
+    rules = load_rules()
 
     print("Fetching playlists…")
     playlists = list_playlists(sp)
@@ -87,8 +126,13 @@ def main() -> None:
         print("No playlists found.")
         sys.exit(0)
 
+    sources = _filter_modifiable([liked_songs, *playlists], rules)
+    if not sources:
+        print("No modifiable playlists found (all protected or unclassified).")
+        sys.exit(0)
+
     print("\n=== Source playlist ===")
-    source = _pick_playlist([liked_songs, *playlists], "Select source playlist")
+    source = _pick_playlist(sources, "Select source playlist")
 
     print(f"\nFetching tracks from '{source.name}'…")
     tracks = _fetch_source_tracks(sp, source)
@@ -112,20 +156,11 @@ def main() -> None:
         print(f"  - {t.name} — {t.artists}")
 
     print("\n=== Target playlist ===")
-    target = _select_target(sp, playlists)
+    target_choices = _filter_modifiable(playlists, rules)
+    existing_target_ids = {p.id for p in target_choices}
+    target = _select_target(sp, target_choices)
 
-    print(f"\nMove {len(selected)} track(s): '{source.name}' → '{target.name}'")
-    confirm = input("Proceed? [y/N] ").strip().lower()
-    if confirm != "y":
-        print("Cancelled.")
-        sys.exit(0)
-
-    uris = [t.uri for t in selected]
-    print("Adding tracks to target…")
-    add_tracks(sp, target.id, uris)
-    print("Removing tracks from source…")
-    _remove_from_source(sp, source, uris)
-    print(f"Done. {len(selected)} track(s) moved to '{target.name}'.")
+    _confirm_and_move(sp, source, target, selected, rules, existing_target_ids)
 
 
 if __name__ == "__main__":

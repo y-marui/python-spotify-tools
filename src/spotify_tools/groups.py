@@ -1,0 +1,104 @@
+"""Local playlist group/protection config.
+
+Spotify's Web API returns playlists as a flat list with no folder
+information, so client-side folder boundaries cannot be read from the API.
+This module lets a user mirror those boundaries locally instead: a TOML
+config maps playlist IDs/names to logical groups, and the `protected`
+group is treated as off-limits for any move operation.
+
+Fail-safe default: if no config file exists, the guard is inactive and
+every playlist is considered modifiable (see README for details). Once a
+config file exists, any playlist that isn't classified into exactly one
+non-protected group is treated as not modifiable, since the mapping
+cannot be verified against Spotify's real folder structure automatically.
+"""
+import os
+import tomllib
+from dataclasses import dataclass
+from pathlib import Path
+
+PROTECTED_GROUP = "protected"
+
+_xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+DEFAULT_GROUPS_PATH = _xdg_config / "spotify-tools-groups.toml"
+
+
+@dataclass
+class PlaylistRule:
+    group: str
+    id: str | None = None
+    name: str | None = None
+    note: str | None = None
+
+
+class GroupConfigError(Exception):
+    """Raised when the group config file is malformed."""
+
+
+class ProtectedPlaylistError(Exception):
+    """Raised when an operation targets a protected or unclassified playlist."""
+
+
+def load_rules(path: Path = DEFAULT_GROUPS_PATH) -> list[PlaylistRule]:
+    """Load playlist group rules from a local TOML config.
+
+    Returns an empty list (guard inactive) if the file doesn't exist.
+    """
+    if not path.exists():
+        return []
+    with path.open("rb") as f:
+        data = tomllib.load(f)
+    return [_parse_rule(entry) for entry in data.get("playlists", [])]
+
+
+def _parse_rule(entry: dict[str, object]) -> PlaylistRule:
+    group = entry.get("group")
+    playlist_id = entry.get("id")
+    name = entry.get("name")
+    if not group:
+        raise GroupConfigError("Each [[playlists]] entry needs a 'group'.")
+    if not playlist_id and not name:
+        raise GroupConfigError("Each [[playlists]] entry needs 'id' or 'name'.")
+    return PlaylistRule(
+        group=str(group),
+        id=str(playlist_id) if playlist_id else None,
+        name=str(name) if name else None,
+        note=str(entry["note"]) if entry.get("note") else None,
+    )
+
+
+def classify(
+    playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
+) -> str | None:
+    """Return the playlist's group name, or None if unclassified/ambiguous."""
+    groups = {
+        r.group
+        for r in rules
+        if (r.id is not None and r.id == playlist_id)
+        or (r.name is not None and r.name == playlist_name)
+    }
+    return next(iter(groups)) if len(groups) == 1 else None
+
+
+def is_modifiable(
+    playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
+) -> bool:
+    """Return whether a playlist may be used as a move source/target.
+
+    Inactive (always True) when no rules are configured. Once rules exist,
+    only playlists classified into exactly one non-protected group qualify.
+    """
+    if not rules:
+        return True
+    group = classify(playlist_id, playlist_name, rules)
+    return group is not None and group != PROTECTED_GROUP
+
+
+def require_modifiable(
+    playlist_id: str, playlist_name: str, rules: list[PlaylistRule]
+) -> None:
+    """Raise ProtectedPlaylistError if the playlist must not be modified."""
+    if not is_modifiable(playlist_id, playlist_name, rules):
+        raise ProtectedPlaylistError(
+            f"'{playlist_name}' is protected or unclassified; refusing to modify."
+        )

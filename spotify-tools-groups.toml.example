@@ -1,0 +1,38 @@
+# Example config for local playlist group/protection rules.
+#
+# Spotify's Web API returns playlists as a flat list with no folder
+# information, so this file lets you mirror your own client-side folder
+# boundaries locally. Copy this file to
+# ${XDG_CONFIG_HOME:-~/.config}/spotify-tools-groups.toml and edit it —
+# do NOT commit your real mapping to this repository.
+#
+# Each [[playlists]] entry identifies one playlist by "id" (preferred,
+# stable) or by exact-match "name", and assigns it to a "group".
+#
+# The "protected" group is special: split-playlist refuses to use a
+# protected playlist as either a move source or a move target.
+#
+# Fail-safe default: if this file doesn't exist, the guard is inactive
+# and every playlist is modifiable. Once it exists, split-playlist also
+# refuses to touch any playlist that isn't classified into exactly one
+# non-protected group here — an unclassified or ambiguous (matched by
+# more than one differing group) playlist is treated the same as
+# protected. This mapping is never verified against Spotify's actual
+# folder structure; keep it in sync by hand.
+
+[[playlists]]
+id = "37i9dQZF1DXcBWIGoYBM5M"
+group = "protected"
+
+[[playlists]]
+name = "Family Shared"
+group = "protected"
+
+[[playlists]]
+name = "Winter 2026 Cleanup"
+group = "future_target"
+note = "Split into seasonal playlists after New Year"
+
+[[playlists]]
+name = "Workout Mix"
+group = "active"

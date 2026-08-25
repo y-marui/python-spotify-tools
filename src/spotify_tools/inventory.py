@@ -19,6 +19,7 @@ class PlaylistInfo:
     url: str
     snapshot_id: str | None
     is_liked_songs: bool = False
+    group: str | None = None
 
 
 @dataclass

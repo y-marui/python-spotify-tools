@@ -91,6 +91,7 @@ def test_to_json_round_trips_dataclass_fields() -> None:
             "url": "https://open.spotify.com/playlist/1",
             "snapshot_id": "snap-1",
             "is_liked_songs": False,
+            "group": None,
         }
     ]
 

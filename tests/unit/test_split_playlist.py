@@ -1,8 +1,17 @@
-"""Tests for source dispatch between playlists and Liked Songs."""
+"""Tests for source dispatch between playlists and Liked Songs, and the
+playlist-group protection guard applied to move operations."""
 from typing import Any
 
-from spotify_tools.playlist import LIKED_SONGS_ID, Playlist
-from spotify_tools.split_playlist import _fetch_source_tracks, _remove_from_source
+import pytest
+
+from spotify_tools.groups import PlaylistRule, ProtectedPlaylistError
+from spotify_tools.playlist import LIKED_SONGS_ID, Playlist, Track
+from spotify_tools.split_playlist import (
+    _confirm_and_move,
+    _fetch_source_tracks,
+    _filter_modifiable,
+    _remove_from_source,
+)
 
 
 class FakeSpotify:
@@ -13,6 +22,7 @@ class FakeSpotify:
         self.saved_tracks_called = False
         self.removed_playlist: list[tuple[str, list[str]]] = []
         self.removed_saved: list[str] = []
+        self.added_playlist: list[tuple[str, list[str]]] = []
 
     def playlist_tracks(self, playlist_id: str) -> dict[str, Any]:
         self.playlist_tracks_calls.append(playlist_id)
@@ -24,6 +34,9 @@ class FakeSpotify:
 
     def next(self, response: dict[str, Any]) -> None:
         return None
+
+    def playlist_add_items(self, playlist_id: str, uris: list[str]) -> None:
+        self.added_playlist.append((playlist_id, uris))
 
     def playlist_remove_all_occurrences_of_items(
         self, playlist_id: str, uris: list[str]
@@ -72,3 +85,75 @@ def test_remove_from_source_removes_playlist_items_for_normal_playlist() -> None
 
     assert sp.removed_playlist == [("abc", ["spotify:track:1"])]
     assert sp.removed_saved == []
+
+
+def test_filter_modifiable_returns_all_when_no_rules_configured() -> None:
+    playlists = [Playlist(id="a", name="A", track_count=0)]
+
+    assert _filter_modifiable(playlists, []) == playlists
+
+
+def test_filter_modifiable_excludes_protected_and_unclassified() -> None:
+    playlists = [
+        Playlist(id="active", name="Active", track_count=0),
+        Playlist(id="blocked", name="Protected", track_count=0),
+        Playlist(id="unknown", name="Unclassified", track_count=0),
+    ]
+    rules = [
+        PlaylistRule(group="active", id="active"),
+        PlaylistRule(group="protected", id="blocked"),
+    ]
+
+    result = _filter_modifiable(playlists, rules)
+
+    assert [p.id for p in result] == ["active"]
+
+
+def test_confirm_and_move_blocks_protected_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    sp = FakeSpotify()
+    source = Playlist(id="src", name="Source", track_count=0)
+    target = Playlist(id="blocked", name="Protected", track_count=0)
+    rules = [
+        PlaylistRule(group="active", id="src"),
+        PlaylistRule(group="protected", id="blocked"),
+    ]
+
+    with pytest.raises(ProtectedPlaylistError):
+        _confirm_and_move(sp, source, target, [], rules, {"blocked"})  # type: ignore[arg-type]
+
+    assert sp.added_playlist == []
+
+
+def test_confirm_and_move_blocks_unclassified_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    sp = FakeSpotify()
+    source = Playlist(id="unknown", name="Unclassified", track_count=0)
+    target = Playlist(id="dest", name="Dest", track_count=0)
+    rules = [PlaylistRule(group="active", id="dest")]
+
+    with pytest.raises(ProtectedPlaylistError):
+        _confirm_and_move(sp, source, target, [], rules, {"dest"})  # type: ignore[arg-type]
+
+    assert sp.added_playlist == []
+
+
+def test_confirm_and_move_allows_newly_created_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A freshly created target playlist isn't in existing_target_ids, so the
+    unclassified guard shouldn't block it."""
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    sp = FakeSpotify()
+    source = Playlist(id="src", name="Source", track_count=0)
+    new_target = Playlist(id="new-id", name="New Playlist", track_count=0)
+    selected = [Track(uri="spotify:track:1", name="Song", artists="Artist")]
+    rules = [PlaylistRule(group="active", id="src")]
+
+    _confirm_and_move(sp, source, new_target, selected, rules, set())  # type: ignore[arg-type]
+
+    assert sp.added_playlist == [("new-id", ["spotify:track:1"])]
