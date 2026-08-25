@@ -5,14 +5,31 @@ import spotipy
 
 from spotify_tools.auth import get_client
 from spotify_tools.playlist import (
+    LIKED_SONGS_ID,
     Playlist,
     Track,
     add_tracks,
     create_playlist,
+    get_liked_songs_playlist,
     list_playlists,
+    list_saved_tracks,
     list_tracks,
+    remove_saved_tracks,
     remove_tracks,
 )
+
+
+def _fetch_source_tracks(sp: spotipy.Spotify, source: Playlist) -> list[Track]:
+    if source.id == LIKED_SONGS_ID:
+        return list_saved_tracks(sp)
+    return list_tracks(sp, source.id)
+
+
+def _remove_from_source(sp: spotipy.Spotify, source: Playlist, uris: list[str]) -> None:
+    if source.id == LIKED_SONGS_ID:
+        remove_saved_tracks(sp, uris)
+    else:
+        remove_tracks(sp, source.id, uris)
 
 
 def _pick_playlist(playlists: list[Playlist], prompt: str) -> Playlist:
@@ -65,15 +82,16 @@ def main() -> None:
 
     print("Fetching playlists…")
     playlists = list_playlists(sp)
-    if not playlists:
+    liked_songs = get_liked_songs_playlist(sp)
+    if not playlists and liked_songs.track_count == 0:
         print("No playlists found.")
         sys.exit(0)
 
     print("\n=== Source playlist ===")
-    source = _pick_playlist(playlists, "Select source playlist")
+    source = _pick_playlist([liked_songs, *playlists], "Select source playlist")
 
     print(f"\nFetching tracks from '{source.name}'…")
-    tracks = list_tracks(sp, source.id)
+    tracks = _fetch_source_tracks(sp, source)
     if not tracks:
         print("No tracks found.")
         sys.exit(0)
@@ -106,7 +124,7 @@ def main() -> None:
     print("Adding tracks to target…")
     add_tracks(sp, target.id, uris)
     print("Removing tracks from source…")
-    remove_tracks(sp, source.id, uris)
+    _remove_from_source(sp, source, uris)
     print(f"Done. {len(selected)} track(s) moved to '{target.name}'.")
 
 
