@@ -60,6 +60,8 @@ pipx install --editable .
 
 ## Usage
 
+### split-playlist
+
 ~~~sh
 uv run split-playlist
 ~~~
@@ -68,10 +70,66 @@ uv run split-playlist
 
 **操作フロー:**
 
-1. ソースプレイリストを番号で選択
+1. ソースプレイリストを番号で選択（Liked Songs も選択可）
 2. 曲一覧を確認し、移動したい曲番号を入力（例: `1,3,5-8`）
 3. 移動先プレイリストを選択（新規作成も可）
 4. 確認後に実行
+
+### spotify-inventory
+
+Spotify 上のデータを一切変更しない読み取り専用コマンド。プレイリスト一覧・曲一覧を Markdown または JSON で出力する。認証には読み取り専用スコープのみを要求する。
+
+~~~sh
+# プレイリスト一覧（Liked Songs を含む）
+uv run spotify-inventory playlists
+uv run spotify-inventory playlists --prefix "Work" --format json
+
+# 指定プレイリストの曲一覧（Liked Songs は playlist_id に "liked" を指定）
+uv run spotify-inventory tracks <playlist-id>
+uv run spotify-inventory tracks liked --format json
+~~~
+
+## Playlist Groups
+
+公式APIにないプレイリストフォルダの保護境界をローカル設定で代替する機能。Spotify Web API はプレイリストをフラットな一覧で返すだけで、Spotify クライアント上の「フォルダ」情報を提供しない。そのため、フォルダによる分類・保護をローカル設定で代替する仕組みを用意している。
+
+**設定ファイルの配置:**
+
+~~~sh
+cp spotify-tools-groups.toml.example ~/.config/spotify-tools-groups.toml
+# ~/.config/spotify-tools-groups.toml を編集して自分のプレイリスト分類を記述する
+~~~
+
+このファイルは個人用マッピングのためリポジトリにはコミットしない（`~/.config/` はリポジトリの外）。
+
+**設定例:**
+
+~~~toml
+[[playlists]]
+id = "37i9dQZF1DXcBWIGoYBM5M"
+group = "protected"
+
+[[playlists]]
+name = "Family Shared"
+group = "protected"
+
+[[playlists]]
+name = "Winter 2026 Cleanup"
+group = "future_target"
+note = "Split into seasonal playlists after New Year"
+~~~
+
+**安全側に倒す挙動（フェイルセーフ）:**
+
+- 設定ファイルが存在しない場合、保護機能は無効。全プレイリストが従来どおり移動元・移動先として選択できる
+- 設定ファイルが存在する場合、`protected` グループのプレイリストは移動元・移動先の両方の選択肢から除外され、実行直前にも拒否される
+- 設定ファイルが存在する場合、`id`/`name` のどちらにも一致しない（未分類）、または複数の異なるグループに一致する（曖昧）プレイリストも同様に除外・拒否される
+- 分割中に新規作成したプレイリストは、その場で作成されたものなので未分類ガードの対象外（移動先としてそのまま使える）
+
+**検証方法・既知の制約:**
+
+- このローカル設定と Spotify クライアント上の実際のフォルダ構造が一致しているかは自動検証できない。`uv run spotify-inventory playlists` の出力（Group 列）で意図した分類になっているか目視確認すること
+- 非公式 API・Spotify クライアント内部データの解析・ブラウザ自動操作には依存しない
 
 ## Commands
 
