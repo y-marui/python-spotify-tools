@@ -21,16 +21,31 @@ _SCOPES = " ".join([
     "user-library-modify",
 ])
 
+_READ_ONLY_SCOPES = " ".join([
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "user-library-read",
+])
 
-def get_client() -> spotipy.Spotify:
-    """Return an authenticated Spotify client via OAuth."""
+
+def _build_client(scope: str, cache_path: str) -> spotipy.Spotify:
     return spotipy.Spotify(
         auth_manager=SpotifyOAuth(
             client_id=os.environ["SPOTIFY_CLIENT_ID"],
             client_secret=os.environ["SPOTIFY_CLIENT_SECRET"],
             redirect_uri=os.environ["SPOTIFY_REDIRECT_URI"],
-            scope=_SCOPES,
-            cache_path=".spotify_cache",
+            scope=scope,
+            cache_path=cache_path,
             open_browser=True,
         )
     )
+
+
+def get_client() -> spotipy.Spotify:
+    """Return an authenticated Spotify client via OAuth (read/write scope)."""
+    return _build_client(_SCOPES, ".spotify_cache")
+
+
+def get_readonly_client() -> spotipy.Spotify:
+    """Return an authenticated Spotify client via OAuth (read-only scope)."""
+    return _build_client(_READ_ONLY_SCOPES, ".spotify_cache_readonly")

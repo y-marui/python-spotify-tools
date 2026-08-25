@@ -46,6 +46,8 @@ uv sync
 
 ## Usage
 
+### split-playlist
+
 ~~~sh
 uv run split-playlist
 ~~~
@@ -54,10 +56,24 @@ uv run split-playlist
 
 **操作フロー:**
 
-1. ソースプレイリストを番号で選択
+1. ソースプレイリストを番号で選択（Liked Songs も選択可）
 2. 曲一覧を確認し、移動したい曲番号を入力（例: `1,3,5-8`）
 3. 移動先プレイリストを選択（新規作成も可）
 4. 確認後に実行
+
+### spotify-inventory
+
+Spotify 上のデータを一切変更しない読み取り専用コマンド。プレイリスト一覧・曲一覧を Markdown または JSON で出力する。認証には読み取り専用スコープのみを要求する。
+
+~~~sh
+# プレイリスト一覧（Liked Songs を含む）
+uv run spotify-inventory playlists
+uv run spotify-inventory playlists --prefix "Work" --format json
+
+# 指定プレイリストの曲一覧（Liked Songs は playlist_id に "liked" を指定）
+uv run spotify-inventory tracks <playlist-id>
+uv run spotify-inventory tracks liked --format json
+~~~
 
 ## Commands
 

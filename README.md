@@ -46,6 +46,8 @@ uv sync
 
 ## Usage
 
+### split-playlist
+
 ~~~sh
 uv run split-playlist
 ~~~
@@ -54,10 +56,24 @@ On first run, a browser window opens for OAuth authentication. The token is cach
 
 **Workflow:**
 
-1. Select the source playlist by number
+1. Select the source playlist by number (Liked Songs can be selected too)
 2. Review the track list and enter track numbers to move (e.g. `1,3,5-8`)
 3. Select or create a target playlist
 4. Confirm to execute
+
+### spotify-inventory
+
+A read-only command that never modifies data on Spotify. Exports playlist and track listings as Markdown or JSON, and requests only read-only OAuth scopes.
+
+~~~sh
+# List playlists (includes Liked Songs)
+uv run spotify-inventory playlists
+uv run spotify-inventory playlists --prefix "Work" --format json
+
+# List tracks in a playlist (use "liked" as playlist_id for Liked Songs)
+uv run spotify-inventory tracks <playlist-id>
+uv run spotify-inventory tracks liked --format json
+~~~
 
 ## Commands
 
