@@ -36,6 +36,20 @@ cp .env.example .env
 uv sync
 ~~~
 
+**Install as commands via pipx (optional)**
+
+To run `split-playlist` / `find-duplicates` as commands from anywhere, install with `pipx`:
+
+~~~sh
+pipx install .
+~~~
+
+Add `--editable` to keep it in sync while you edit the repo:
+
+~~~sh
+pipx install --editable .
+~~~
+
 ## Configuration
 
 | Variable | Description |
