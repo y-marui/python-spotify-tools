@@ -36,6 +36,20 @@ cp .env.example .env
 uv sync
 ~~~
 
+**pipx でコマンドとしてインストールする場合（任意）**
+
+`split-playlist` / `find-duplicates` をコマンドとしてどこからでも実行したい場合は `pipx` でインストールできる:
+
+~~~sh
+pipx install .
+~~~
+
+リポジトリを編集しながら試す場合は `--editable` を付ける:
+
+~~~sh
+pipx install --editable .
+~~~
+
 ## Configuration
 
 | 変数 | 説明 |
