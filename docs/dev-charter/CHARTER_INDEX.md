@@ -23,12 +23,13 @@ dev-charter の各ドキュメントへのインデックス。
 | シークレット管理、git フック、pre-commit、セキュリティ設定 | `SECURITY_POLICY.md` |
 | アプリの対応言語、ローカライズ方針 | `LOCALIZATION_POLICY.md` |
 | 収益化、App Store、GitHub Sponsors、Buy Me a Coffee | `MONETIZATION_POLICY.md` |
-| チーム構成、git ワークフロー、Conventional Commits、ブランチ戦略 | `PROJECT_LIFECYCLE.md` |
+| チーム構成、git ワークフロー、Conventional Commits、ブランチ戦略、epic ブランチ、Draft PR、main の安定性 | `PROJECT_LIFECYCLE.md` |
 | UI デザイン、カラーパレット、ダークモード、アイコン（SF Symbols・Material Symbols） | `UI_GUIDELINES.md` |
 | dev-charter の初回導入手順 | `INSTALL_CHECKLIST.md` |
 | dev-charter の更新手順（subtree pull 後） | `UPDATE_CHECKLIST.md` |
 | GitHub Actions、CI ジョブ設計、ステータスチェック、Branch Protection | `topics/CI_POLICY.md` |
 | GitHub リポジトリ設定、Ruleset、Dependabot、FUNDING.yml | `topics/GITHUB_SETTINGS.md` |
+| TODO・バックログ・ロードマップ管理、Issues、Sub-issues、Milestones、Projects (v2) | `topics/GITHUB_PROJECT_MANAGEMENT.md` |
 | OSS コントリビューション、Issue テンプレート、PR テンプレート、準 CLA | `topics/GITHUB_CONTRIBUTING.md` |
 | README の構成（テンプレートから作成したプロジェクト用） | `topics/PROJECT_README_GUIDELINES.md` |
 | README の構成（テンプレートリポジトリ自体の設計） | `topics/TEMPLATE_README_GUIDELINES.md` |
