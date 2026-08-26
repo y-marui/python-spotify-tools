@@ -28,8 +28,7 @@ uv + Claude Code + GitHub Copilot 前提の OSS テンプレート。
 src/project_name/   # パッケージ本体
 tests/unit/         # 単体テスト
 tests/integration/  # 統合テスト
-ai/context/         # AI向け制約要約（毎回読み込む）
-docs/               # 人間が書き・読む仕様書（AI は参照のみ）
+docs/               # 仕様・設計ドキュメント（人間・AI 共用ナレッジベース）
 docs/dev-charter/   # 開発憲章（git subtree で取り込み）
 examples/           # 実装パターンサンプル
 ```
@@ -49,10 +48,9 @@ API → Service → Repository
 
 **ファイル読み込み順序:**
 1. `AI_CONTEXT.md`（このファイル）
-2. `ai/context/`（全ファイル）
-3. `docs/specification.md`（詳細が必要な場合のみ）
-4. `docs/architecture.md`（詳細が必要な場合のみ）
-5. `docs/guardrails.md`
+2. `docs/architecture.md`（詳細が必要な場合のみ）
+3. `docs/development_rules.md`（詳細が必要な場合のみ）
+4. `docs/guardrails.md`
 
 ---
 
@@ -140,12 +138,16 @@ API → Service → Repository
 
 日英両方のドキュメントが存在する場合は**日本語版を正本**として編集し、英語版をそれに合わせて更新する（英語版を独立して編集しない）。
 
-### docs/ and ai/context/ Roles
+### docs/ Roles
 
-| ディレクトリ | 役割 | AI の編集 |
+`docs/` は人間・AI 共用の唯一のナレッジベースとする（正本を分割しない）。
+
+| ファイル | 役割 | AI の編集 |
 |---|---|---|
-| `docs/` | 人間が書き・読む詳細仕様書 | **禁止**（参照のみ） |
-| `ai/context/` | AI向け制約要約。`docs/` と競合する場合は **こちらを優先** | 更新可 |
+| `docs/architecture.md` | モジュール構成・依存関係 | 更新可 |
+| `docs/development_rules.md` | ブランチ運用・開発フロー・タスク別手順 | 更新可 |
+| `docs/guardrails.md` | 変更してはいけない範囲 | 更新可（変更自体は Issue 経由） |
+| `docs/dev-charter/` | 開発憲章（git subtree） | **禁止**（直接編集しない。変更は dev-charter 本体に Issue を立てる） |
 
 ### CI / Local Development Commands
 
@@ -241,4 +243,4 @@ pre-commit run --all-files  # 動作確認（必須）
 - **大規模リファクタ禁止**: 意図しない挙動変化を防ぐため（明示的に依頼された場合を除く）
 - **依存追加禁止**: ライセンス・セキュリティリスクを人間がレビューするため。必要な場合は Issue を作成する
 - **WIP コミット禁止**: 動作しないコードはコミットしない
-- `docs/` ディレクトリを AI が直接編集しない（参照のみ）
+- `docs/dev-charter/` 配下のファイルの直接編集（変更は dev-charter リポジトリ本体に Issue を立て `git subtree pull` で取り込む）
