@@ -120,6 +120,66 @@ def test_run_create_rejects_name_colliding_with_protected_rule(
     assert sp.created is None
 
 
+def test_run_create_rejects_protected_name_before_prompting(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Playlist Groups guard must run before the confirmation prompt,
+    not after — otherwise a rejected name still shows the user a "Proceed?"
+    prompt they can say yes to before hitting the (uncaught) error."""
+
+    def _fail_if_called(_: str) -> str:
+        raise AssertionError("must not prompt when the safety guard rejects")
+
+    monkeypatch.setattr("builtins.input", _fail_if_called)
+    sp = FakeSpotify(_playlist())
+    rules = [PlaylistRule(group="protected", name="New Playlist")]
+    args = _parse_args(["create", "New Playlist"])
+
+    with pytest.raises(ProtectedPlaylistError):
+        _run_create(args, sp, rules)  # type: ignore[arg-type]
+
+    assert sp.created is None
+
+
+def test_run_create_warns_when_final_state_does_not_match(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+
+    class StaleCreateSpotify(FakeSpotify):
+        def current_user_playlist_create(
+            self,
+            name: str,
+            public: bool = True,
+            collaborative: bool = False,
+            description: str = "",
+        ) -> dict[str, Any]:
+            self.created = {
+                "name": name,
+                "public": public,
+                "collaborative": collaborative,
+                "description": description,
+            }
+            # Simulate the API not honoring the requested public flag.
+            self._playlist = {
+                "id": "new-id",
+                "name": name,
+                "description": description,
+                "public": False,
+                "collaborative": collaborative,
+                "owner": {"id": self._user_id},
+            }
+            return {"id": "new-id", "name": name}
+
+    sp = StaleCreateSpotify(_playlist())
+    args = _parse_args(["create", "New Playlist", "--public"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        _run_create(args, sp, [])  # type: ignore[arg-type]
+
+    assert exc_info.value.code == 1
+
+
 # --- update ---
 
 
@@ -212,6 +272,30 @@ def test_run_update_warns_when_final_state_does_not_match(
 
     sp = StaleSpotify(_playlist())
     args = _parse_args(["update", "abc", "--name", "New Name"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        _run_update(args, sp, [])  # type: ignore[arg-type]
+
+    assert exc_info.value.code == 1
+
+
+def test_run_update_warns_on_unrequested_field_side_effect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Spotify can change a field nobody asked to touch as a side effect of
+    another field (e.g. forcing public=False when collaborative is turned
+    on). The verification step must catch this even though only
+    "collaborative" was in the requested changes."""
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+
+    class SideEffectSpotify(FakeSpotify):
+        def playlist_change_details(self, playlist_id: str, **kwargs: Any) -> None:
+            self.changed = kwargs
+            self._playlist["collaborative"] = True
+            self._playlist["public"] = False  # unrequested side effect
+
+    sp = SideEffectSpotify(_playlist(public=True))
+    args = _parse_args(["update", "abc", "--collaborative"])
 
     with pytest.raises(SystemExit) as exc_info:
         _run_update(args, sp, [])  # type: ignore[arg-type]

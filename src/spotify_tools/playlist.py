@@ -102,9 +102,9 @@ def list_saved_tracks(sp: spotipy.Spotify) -> list[Track]:
 def create_playlist(
     sp: spotipy.Spotify,
     name: str,
-    description: str | None = None,
     public: bool = False,
     collaborative: bool = False,
+    description: str | None = None,
 ) -> Playlist:
     """Create a new playlist and return it (private by default)."""
     if collaborative and public:
@@ -148,6 +148,8 @@ def update_playlist_details(
     """
     if all(v is None for v in (name, description, public, collaborative)):
         raise ValueError("At least one field must be provided to update.")
+    if collaborative and public:
+        raise ValueError("A collaborative playlist cannot be public.")
     sp.playlist_change_details(
         playlist_id,
         name=name,

@@ -81,6 +81,32 @@ def _confirm(prompt: str, skip: bool) -> bool:
     return input(f"{prompt} [y/N] ").strip().lower() == "y"
 
 
+def _verify_write(
+    sp: spotipy.Spotify, playlist_id: str, expected: dict[str, str | bool]
+) -> PlaylistDetails:
+    """Re-fetch the playlist and abort with a warning if it drifted from what
+    was requested — including fields nobody asked to change (e.g. Spotify
+    forcing public=False as a side effect of turning on collaborative)."""
+    after = get_playlist_details(sp, playlist_id)
+    actual: dict[str, str | bool | None] = {
+        "name": after.name,
+        "description": after.description,
+        "public": after.public,
+        "collaborative": after.collaborative,
+    }
+    mismatches = {
+        field: (expected_value, actual[field])
+        for field, expected_value in expected.items()
+        if actual[field] != expected_value
+    }
+    if mismatches:
+        print("\nWARNING: final state doesn't match the requested change(s):")
+        for field, (expected_value, actual_value) in mismatches.items():
+            print(f"  {field}: expected {expected_value!r}, got {actual_value!r}")
+        sys.exit(1)
+    return after
+
+
 def _run_create(
     args: argparse.Namespace, sp: spotipy.Spotify, rules: list[PlaylistRule]
 ) -> None:
@@ -90,11 +116,11 @@ def _run_create(
     print(f"  Public: {args.public}")
     print(f"  Collaborative: {args.collaborative}")
 
+    require_safe_new_target(_NEW_PLAYLIST_ID_PLACEHOLDER, args.name, rules)
+
     if not _confirm("\nProceed?", args.yes):
         print("Cancelled.")
         sys.exit(0)
-
-    require_safe_new_target(_NEW_PLAYLIST_ID_PLACEHOLDER, args.name, rules)
 
     playlist = create_playlist(
         sp,
@@ -104,11 +130,17 @@ def _run_create(
         collaborative=args.collaborative,
     )
 
-    details = get_playlist_details(sp, playlist.id)
-    print(f"\nCreated '{details.name}' ({details.id}).")
-    print(f"  Description: {details.description or '(none)'}")
-    print(f"  Public: {details.public}")
-    print(f"  Collaborative: {details.collaborative}")
+    expected: dict[str, str | bool] = {
+        "name": args.name,
+        "description": args.description or "",
+        "public": args.public,
+        "collaborative": args.collaborative,
+    }
+    after = _verify_write(sp, playlist.id, expected)
+    print(f"\nCreated '{after.name}' ({after.id}).")
+    print(f"  Description: {after.description or '(none)'}")
+    print(f"  Public: {after.public}")
+    print(f"  Collaborative: {after.collaborative}")
 
 
 def _requested_changes(args: argparse.Namespace) -> dict[str, str | bool]:
@@ -134,6 +166,20 @@ def _show_update_diff(before: PlaylistDetails, changes: dict[str, str | bool]) -
     }
     for field, new_value in changes.items():
         print(f"  {field}: {current[field]!r} -> {new_value!r}")
+
+
+def _expected_after_update(
+    before: PlaylistDetails, changes: dict[str, str | bool]
+) -> dict[str, str | bool]:
+    """Merge requested changes over the current state to get the full
+    expected result, so _verify_write also catches drift in fields nobody
+    asked to change."""
+    return {
+        "name": changes.get("name", before.name),
+        "description": changes.get("description", before.description),
+        "public": changes.get("public", bool(before.public)),
+        "collaborative": changes.get("collaborative", before.collaborative),
+    }
 
 
 def _run_update(
@@ -166,24 +212,8 @@ def _run_update(
         collaborative=args.collaborative,
     )
 
-    after = get_playlist_details(sp, args.playlist_id)
-    after_values: dict[str, str | bool | None] = {
-        "name": after.name,
-        "description": after.description,
-        "public": after.public,
-        "collaborative": after.collaborative,
-    }
-    mismatches = {
-        field: (new_value, after_values[field])
-        for field, new_value in changes.items()
-        if after_values[field] != new_value
-    }
-    if mismatches:
-        print("\nWARNING: final state doesn't match the requested change(s):")
-        for field, (expected, actual) in mismatches.items():
-            print(f"  {field}: expected {expected!r}, got {actual!r}")
-        sys.exit(1)
-
+    expected = _expected_after_update(before, changes)
+    after = _verify_write(sp, args.playlist_id, expected)
     print(f"\nDone. '{after.name}' ({after.id}) updated.")
     print(f"  Description: {after.description or '(none)'}")
     print(f"  Public: {after.public}")

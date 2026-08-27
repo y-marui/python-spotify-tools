@@ -143,6 +143,18 @@ def test_create_playlist_uses_current_user_playlist_create() -> None:
     }
 
 
+def test_create_playlist_keeps_public_as_third_positional_arg() -> None:
+    """public must stay the 3rd positional parameter (as it was before
+    description/collaborative were added) so existing positional callers
+    keep meaning what they meant."""
+    sp = _FakeSpotifyForPlaylistOps()
+
+    create_playlist(sp, "New Playlist", True)  # type: ignore[arg-type]
+
+    assert sp.created is not None
+    assert sp.created["public"] is True
+
+
 def test_create_playlist_rejects_collaborative_and_public() -> None:
     sp = _FakeSpotifyForPlaylistOps()
 
@@ -174,6 +186,15 @@ def test_get_playlist_details_returns_owner_and_metadata() -> None:
         public=True,
         collaborative=False,
     )
+
+
+def test_update_playlist_details_rejects_collaborative_and_public() -> None:
+    sp = _FakeSpotifyForPlaylistOps()
+
+    with pytest.raises(ValueError):
+        update_playlist_details(  # type: ignore[arg-type]
+            sp, "abc", public=True, collaborative=True
+        )
 
 
 def test_update_playlist_details_requires_at_least_one_field() -> None:
