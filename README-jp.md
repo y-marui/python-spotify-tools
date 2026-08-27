@@ -89,6 +89,26 @@ uv run spotify-inventory tracks <playlist-id>
 uv run spotify-inventory tracks liked --format json
 ~~~
 
+### reorder-by-key
+
+プレイリストを Camelot Wheel(ハーモニックミキシング)順に並べ替える、書き込み系コマンド。1曲目のキーを起点に、残りの曲を隣接キー優先の順序に in-place で並べ替える。
+
+Spotify Web API は2024年11月27日以降、新規アプリから Audio Features(曲のキー・BPM等)エンドポイントへのアクセスを許可していない。そのため、このコマンドはキー情報を自動取得せず、外部で調べたキーをテキストファイルとして受け取る暫定仕様になっている(例: Spotify 純正アプリの Mix 機能の画面を見て手動で書き出す)。
+
+~~~sh
+# keys.txt: プレイリストの現在の並び順と1対1で対応する Camelot キーを1行ずつ
+# 例:
+#   10B
+#   10A
+#   9B
+uv run reorder-by-key <playlist-id> keys.txt
+~~~
+
+- 時計回り/反時計回りは、プレイリスト内の実際のキー分布を見て、起点からどちらの方向がより密集して収まるかを自動判定する
+- 同じ Camelot 番号内ではメジャー/マイナー(relative key)を近接として扱う
+- 実行前に並べ替え後の順序を表示して確認を求める(`--yes` でスキップ可能)
+- Playlist Groups の保護設定(`protected`)が有効な場合、対象プレイリストが保護・未分類なら拒否される
+
 ## Playlist Groups
 
 公式APIにないプレイリストフォルダの保護境界をローカル設定で代替する機能。Spotify Web API はプレイリストをフラットな一覧で返すだけで、Spotify クライアント上の「フォルダ」情報を提供しない。そのため、フォルダによる分類・保護をローカル設定で代替する仕組みを用意している。
