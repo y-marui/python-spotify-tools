@@ -260,6 +260,26 @@ def test_run_update_rejects_unclassified_playlist(
     assert sp.changed is None
 
 
+def test_run_update_rejects_ambiguous_playlist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Two rules match the same playlist via id and name into different
+    groups, so classification is ambiguous and must be refused just like
+    protected/unclassified."""
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    sp = FakeSpotify(_playlist(playlist_id="abc", name="My Playlist"))
+    rules = [
+        PlaylistRule(group="active", id="abc"),
+        PlaylistRule(group="future_target", name="My Playlist"),
+    ]
+    args = _parse_args(["update", "abc", "--name", "New Name"])
+
+    with pytest.raises(ProtectedPlaylistError):
+        _run_update(args, sp, rules)  # type: ignore[arg-type]
+
+    assert sp.changed is None
+
+
 def test_run_update_warns_when_final_state_does_not_match(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
