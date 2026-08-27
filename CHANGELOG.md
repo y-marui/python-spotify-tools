@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `reorder-by-key` command: reorders a playlist in-place into Camelot Wheel (harmonic-mixing) order from a manually supplied key file, auto-selecting clockwise/counterclockwise by which direction packs the playlist's actual keys more tightly. A stopgap until Spotify's Web API restores third-party access to track key data (Audio Features has been restricted for new apps since 2024-11-27).
 - `split-playlist` can now use Liked Songs as a move source, in addition to regular playlists (#14).
 - `spotify-inventory` command: read-only export of playlist and track listings as Markdown or JSON, using a read-only OAuth scope (#15).
 - Local playlist group config (`spotify-tools-groups.toml`) to protect playlists from being used as a move source/target, standing in for playlist folders that the official API doesn't expose (#16).

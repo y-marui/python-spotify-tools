@@ -53,6 +53,12 @@ def list_tracks(sp: spotipy.Spotify, playlist_id: str) -> list[Track]:
     return items
 
 
+def get_playlist_name(sp: spotipy.Spotify, playlist_id: str) -> str:
+    """Return a playlist's name."""
+    name: str = sp.playlist(playlist_id, fields="name")["name"]
+    return name
+
+
 def get_liked_songs_playlist(sp: spotipy.Spotify) -> Playlist:
     """Return a pseudo-playlist representing the user's Liked Songs."""
     response = sp.current_user_saved_tracks(limit=1)

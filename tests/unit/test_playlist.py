@@ -4,6 +4,7 @@ from typing import Any
 from spotify_tools.playlist import (
     LIKED_SONGS_ID,
     get_liked_songs_playlist,
+    get_playlist_name,
     list_saved_tracks,
     remove_saved_tracks,
 )
@@ -39,6 +40,9 @@ class FakeSpotify:
     def current_user_saved_tracks_delete(self, tracks: list[str]) -> None:
         self.deleted.append(tracks)
 
+    def playlist(self, playlist_id: str, fields: str | None = None) -> dict[str, Any]:
+        return {"name": f"Playlist {playlist_id}"}
+
 
 def test_get_liked_songs_playlist_returns_total_count() -> None:
     sp = FakeSpotify([{"total": 3, "items": [], "next": None}])
@@ -63,6 +67,14 @@ def test_list_saved_tracks_paginates_and_skips_local() -> None:
     tracks = list_saved_tracks(sp)  # type: ignore[arg-type]
 
     assert [t.name for t in tracks] == ["Song A", "Song B"]
+
+
+def test_get_playlist_name_returns_name() -> None:
+    sp = FakeSpotify([{"total": 0, "items": [], "next": None}])
+
+    name = get_playlist_name(sp, "abc123")  # type: ignore[arg-type]
+
+    assert name == "Playlist abc123"
 
 
 def test_remove_saved_tracks_chunks_by_fifty() -> None:

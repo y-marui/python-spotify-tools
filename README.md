@@ -89,6 +89,26 @@ uv run spotify-inventory tracks <playlist-id>
 uv run spotify-inventory tracks liked --format json
 ~~~
 
+### reorder-by-key
+
+A write command that reorders a playlist in-place into Camelot Wheel (harmonic mixing) order, starting from the first track's key and walking the rest in adjacent-key priority.
+
+Spotify's Web API has blocked new apps from the Audio Features endpoint (track key/tempo/etc.) since 2024-11-27, so this command doesn't fetch keys itself. As a stopgap, it takes Camelot keys from an external text file instead (e.g. read off the official Spotify app's Mix feature screen and typed in by hand).
+
+~~~sh
+# keys.txt: one Camelot key per line, matching the playlist's current
+# order 1:1, e.g.:
+#   10B
+#   10A
+#   9B
+uv run reorder-by-key <playlist-id> keys.txt
+~~~
+
+- Clockwise vs. counterclockwise is chosen automatically by checking which direction packs the playlist's actual keys into a tighter arc from the starting key
+- Within the same Camelot number, relative major/minor keys are treated as adjacent
+- Shows the planned order and asks for confirmation before writing (skip with `--yes`)
+- Refused if the target playlist is protected or unclassified under the Playlist Groups guard (when enabled)
+
 ## Playlist Groups
 
 Local config that stands in for playlist folder boundaries the official API doesn't expose. The Spotify Web API returns playlists as a flat list, with no folder information, so this repo lets you mirror your own client-side folder structure locally instead.
