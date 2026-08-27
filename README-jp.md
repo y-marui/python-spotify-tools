@@ -66,6 +66,11 @@ git remote add dev-charter https://github.com/y-marui/dev-charter
 git subtree pull --prefix=docs/dev-charter dev-charter main --squash
 ```
 
+> **Note（[lite](#lite-version) を導入している場合）:** 上記の `main` を `lite` に
+> 置き換えること。取り違えると full/lite が入れ替わってしまう（[Makefile
+> Helper](#makefile-helper) は導入済みのブランチを自動判定するため、この
+> 取り違えが起きない）。
+
 > **Note（テンプレートリポジトリから作成したプロジェクト）:**
 > GitHub テンプレートはファイルのみコピーし git 履歴を引き継がないため、`git subtree pull` は失敗します。
 > `check-charter.yml` ワークフローがこのケースを自動検出して対処します。
@@ -130,18 +135,29 @@ lite の `VERSION` は full とは独立して管理され、収録ファイル�
 `git subtree pull` は作業ツリーに未コミットの変更があると失敗するため、
 実行前に自動で `git stash` し、完了後に `git stash pop` で戻す。
 
+導入時に `main`（full）と `lite` のどちらを選んだかをこのターゲットが覚えている
+必要はない。既存の `docs/dev-charter/CHARTER_INDEX.md` の内容（lite 版は
+`scripts/publish-lite-branch.sh` が生成するため必ず `(lite)` を含む）から
+毎回導入済みブランチを自動判定するため、`main`/`lite` を取り違えて更新して
+しまう事故（full 導入なのに lite で上書き、またはその逆）を防げる。
+
 ```
 .PHONY: update-charter
 update-charter:
 	git remote | grep -q '^dev-charter$$' || \
 	  git remote add dev-charter https://github.com/y-marui/dev-charter
 	git fetch dev-charter
-	@STASHED=0; \
+	@BRANCH=main; \
+	if [ -f docs/dev-charter/CHARTER_INDEX.md ] && grep -q '(lite)' docs/dev-charter/CHARTER_INDEX.md; then \
+		BRANCH=lite; \
+	fi; \
+	echo "dev-charter branch: $$BRANCH"; \
+	STASHED=0; \
 	if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$$(git ls-files --others --exclude-standard)" ]; then \
 		git stash push -u -m "update-charter"; \
 		STASHED=1; \
 	fi; \
-	git subtree pull --prefix=docs/dev-charter dev-charter main --squash; \
+	git subtree pull --prefix=docs/dev-charter dev-charter $$BRANCH --squash; \
 	if [ "$$STASHED" = "1" ]; then git stash pop; fi
 ```
 
@@ -170,7 +186,31 @@ jobs:
       contents: write
       pull-requests: write
       actions: read
+
+  gate:
+    name: Dev Charter
+    needs: [check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify dev-charter check did not fail
+        run: |
+          result="${{ needs.check.result }}"
+          if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+            echo "::error::dev-charter check did not succeed (got: $result)"
+            exit 1
+          fi
+          echo "check result: $result (skipped is fine — draft or dependabot)"
 ```
+
+> **Note:** dependabot が作成した PR や draft PR では `check` 自体がスキップされます
+> （後述）。`gate` はその場合も `skipped` を正常として扱い、必ず `Dev Charter`（ワークフロー
+> 自身の `name:` と同じ値）を報告します。Branch Protection（Ruleset）に必須ステータス
+> チェックとして登録するのは `Check / check` ではなく `Dev Charter` です（[CI_POLICY.md
+> の Ruleset 節](topics/CI_POLICY.md#branch-protection-ruleset)参照）。
+> `check` job だけを直接必須チェックに登録すると、skip 時に `Check / check` という
+> コンテキスト自体が一切報告されず、PR が `Expected — Waiting for status to be reported`
+> のまま永久にブロックされます。
 
 > **Note:** dependabot が作成した PR ではスキップされます（依存関係更新だけが動いている間はチェック不要という判断）。
 > repo が完全に静止している間はチェックが走らないため、活動に関わらず定期的に確認したい場合は
