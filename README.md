@@ -89,6 +89,26 @@ uv run spotify-inventory tracks <playlist-id>
 uv run spotify-inventory tracks liked --format json
 ~~~
 
+### spotify-playlist
+
+A write command to create playlists and edit their metadata. `create` makes a new empty playlist; `update` changes an existing playlist's name, description, public/private state, or collaborative flag. The description text itself is expected to be managed in an external source of truth (e.g. Obsidian); this command doesn't depend on any specific file format or personal path.
+
+~~~sh
+# Create a new playlist (private by default)
+uv run spotify-playlist create "My New Playlist" --description "A description"
+uv run spotify-playlist create "Public Mix" --public
+
+# Update an existing playlist (by ID, passing only the fields to change)
+uv run spotify-playlist update <playlist-id> --name "New Name"
+uv run spotify-playlist update <playlist-id> --description "Updated description" --private
+~~~
+
+- Both `create` and `update` show the planned change before writing and require confirmation (skip with `--yes`; without it, the default is to wait for confirmation and not change anything)
+- `update` only targets playlists owned by the current user; playlists owned by someone else are refused
+- `update` is refused if the target playlist is protected, unclassified, or ambiguous under the Playlist Groups guard (when enabled)
+- `update` errors out and changes nothing if no field to update is given
+- After writing, it re-fetches and displays the actual name/description/public/collaborative state so you can verify the write; it warns if the result doesn't match what was requested
+
 ### reorder-by-key
 
 A write command that reorders a playlist in-place into Camelot Wheel (harmonic mixing) order, starting from the first track's key and walking the rest in adjacent-key priority.

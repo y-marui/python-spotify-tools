@@ -89,6 +89,26 @@ uv run spotify-inventory tracks <playlist-id>
 uv run spotify-inventory tracks liked --format json
 ~~~
 
+### spotify-playlist
+
+プレイリストの作成・メタデータ編集を行う書き込み系コマンド。`create` で空のプレイリストを新規作成し、`update` で既存プレイリストの名前・説明・公開状態・共同編集フラグを変更する。プレイリストの説明文そのものは Obsidian 等の外部正本で管理する想定で、このコマンドは特定のファイル形式や個人パスに依存しない。
+
+~~~sh
+# 新規作成（デフォルトは非公開）
+uv run spotify-playlist create "My New Playlist" --description "説明文"
+uv run spotify-playlist create "Public Mix" --public
+
+# 既存プレイリストの更新（ID で指定、変更したい項目だけ渡す）
+uv run spotify-playlist update <playlist-id> --name "New Name"
+uv run spotify-playlist update <playlist-id> --description "更新後の説明" --private
+~~~
+
+- `create`・`update` とも実行前に変更内容を表示し、確認後に書き込む（`--yes` でスキップ可能。ただし `--yes` を付けない限りデフォルトは確認待ちで変更しない）
+- `update` は自分が所有するプレイリストのみを対象とする。他ユーザー所有のプレイリストは拒否する
+- `update` は Playlist Groups の保護設定が有効な場合、対象プレイリストが `protected`・未分類・曖昧なら拒否する
+- `update` は変更対象の項目を一つも指定しない場合はエラーにして何も変更しない
+- 書き込み後は再取得した実際の名前・説明・公開状態・共同編集フラグを表示して確認できるようにする。反映結果が指定内容と食い違う場合は警告を出す
+
 ### reorder-by-key
 
 プレイリストを Camelot Wheel(ハーモニックミキシング)順に並べ替える、書き込み系コマンド。1曲目のキーを起点に、残りの曲を隣接キー優先の順序に in-place で並べ替える。

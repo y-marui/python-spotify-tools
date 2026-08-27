@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `spotify-playlist` command: `create` makes a new playlist and `update` edits an existing playlist's name/description/public/collaborative state, with an ownership guard and the Playlist Groups protection guard applied to `update`. Also migrates playlist creation off the deprecated `user_playlist_create(...)` to `current_user_playlist_create(...)`/`playlist_change_details(...)` (#20).
 - `reorder-by-key` command: reorders a playlist in-place into Camelot Wheel (harmonic-mixing) order from a manually supplied key file, auto-selecting clockwise/counterclockwise by which direction packs the playlist's actual keys more tightly. A stopgap until Spotify's Web API restores third-party access to track key data (Audio Features has been restricted for new apps since 2024-11-27).
 - `split-playlist` can now use Liked Songs as a move source, in addition to regular playlists (#14).
 - `spotify-inventory` command: read-only export of playlist and track listings as Markdown or JSON, using a read-only OAuth scope (#15).
