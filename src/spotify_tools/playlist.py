@@ -20,6 +20,20 @@ class Track:
     artists: str
 
 
+@dataclass
+class PlaylistDetails:
+    id: str
+    name: str
+    owner_id: str
+    description: str
+    public: bool | None
+    collaborative: bool
+
+
+class NotPlaylistOwnerError(Exception):
+    """Raised when an operation targets a playlist not owned by the current user."""
+
+
 def list_playlists(sp: spotipy.Spotify) -> list[Playlist]:
     """Return all playlists owned or followed by the current user, sorted by name."""
     items: list[Playlist] = []
@@ -85,11 +99,75 @@ def list_saved_tracks(sp: spotipy.Spotify) -> list[Track]:
     return items
 
 
-def create_playlist(sp: spotipy.Spotify, name: str, public: bool = False) -> Playlist:
-    """Create a new private playlist and return it."""
-    user_id: str = sp.current_user()["id"]
-    p = sp.user_playlist_create(user_id, name, public=public)
+def create_playlist(
+    sp: spotipy.Spotify,
+    name: str,
+    public: bool = False,
+    collaborative: bool = False,
+    description: str | None = None,
+) -> Playlist:
+    """Create a new playlist and return it (private by default)."""
+    if collaborative and public:
+        raise ValueError("A collaborative playlist cannot be public.")
+    p = sp.current_user_playlist_create(
+        name,
+        public=public,
+        collaborative=collaborative,
+        description=description or "",
+    )
     return Playlist(id=p["id"], name=p["name"], track_count=0)
+
+
+def get_playlist_details(sp: spotipy.Spotify, playlist_id: str) -> PlaylistDetails:
+    """Return a playlist's editable metadata and owner."""
+    p = sp.playlist(
+        playlist_id, fields="id,name,description,public,collaborative,owner.id"
+    )
+    return PlaylistDetails(
+        id=p["id"],
+        name=p["name"],
+        owner_id=p["owner"]["id"],
+        description=p.get("description") or "",
+        public=p.get("public"),
+        collaborative=bool(p.get("collaborative")),
+    )
+
+
+def update_playlist_details(
+    sp: spotipy.Spotify,
+    playlist_id: str,
+    name: str | None = None,
+    description: str | None = None,
+    public: bool | None = None,
+    collaborative: bool | None = None,
+) -> None:
+    """Update a playlist's name/description/public/collaborative state.
+
+    Raises ValueError if no field is given, since Spotify's API silently
+    no-ops on an empty payload.
+    """
+    if all(v is None for v in (name, description, public, collaborative)):
+        raise ValueError("At least one field must be provided to update.")
+    if collaborative and public:
+        raise ValueError("A collaborative playlist cannot be public.")
+    sp.playlist_change_details(
+        playlist_id,
+        name=name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
+    )
+
+
+def require_owned_by_current_user(
+    details: PlaylistDetails, current_user_id: str
+) -> None:
+    """Raise NotPlaylistOwnerError if the playlist isn't owned by the current user."""
+    if details.owner_id != current_user_id:
+        raise NotPlaylistOwnerError(
+            f"'{details.name}' is owned by '{details.owner_id}', not the "
+            "current user; refusing to modify."
+        )
 
 
 def add_tracks(sp: spotipy.Spotify, playlist_id: str, uris: list[str]) -> None:
