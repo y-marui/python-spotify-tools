@@ -7,8 +7,8 @@ from spotify_tools.auth import get_client
 from spotify_tools.groups import (
     PlaylistRule,
     is_modifiable,
-    load_rules,
     require_modifiable,
+    require_rules,
     require_safe_new_target,
 )
 from spotify_tools.playlist import (
@@ -120,7 +120,7 @@ def _confirm_and_move(
 
 def main() -> None:
     sp = get_client()
-    rules = load_rules()
+    rules = require_rules()
 
     print("Fetching playlists…")
     playlists = list_playlists(sp)

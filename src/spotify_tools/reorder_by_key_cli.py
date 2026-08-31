@@ -17,7 +17,7 @@ from spotify_tools.camelot import (
     parse_camelot,
     sort_order,
 )
-from spotify_tools.groups import load_rules, require_modifiable
+from spotify_tools.groups import require_modifiable, require_rules
 from spotify_tools.playlist import Track, get_playlist_name, list_tracks
 from spotify_tools.reorder import apply_moves, compute_moves
 
@@ -82,7 +82,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             print("Cancelled.")
             sys.exit(0)
 
-    rules = load_rules()
+    rules = require_rules()
     playlist_name = get_playlist_name(sp, args.playlist_id)
     require_modifiable(args.playlist_id, playlist_name, rules)
 

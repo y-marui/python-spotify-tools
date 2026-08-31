@@ -8,8 +8,8 @@ import spotipy
 from spotify_tools.auth import get_client
 from spotify_tools.groups import (
     PlaylistRule,
-    load_rules,
     require_modifiable,
+    require_rules,
     require_safe_new_target,
 )
 from spotify_tools.playlist import (
@@ -223,7 +223,7 @@ def _run_update(
 def main(argv: Sequence[str] | None = None) -> None:
     args = _parse_args(argv)
     sp = get_client()
-    rules = load_rules()
+    rules = require_rules()
     if args.command == "create":
         _run_create(args, sp, rules)
     else:
