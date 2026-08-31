@@ -27,6 +27,9 @@ env/
 # Secrets
 .env
 
+# Checkout-local playlist protection rules (personal data)
+spotify-tools-groups.toml
+
 # Spotify OAuth cache
 .spotify_cache*
 .cache*

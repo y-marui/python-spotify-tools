@@ -6,11 +6,9 @@ This module lets a user mirror those boundaries locally instead: a TOML
 config maps playlist IDs/names to logical groups, and the `protected`
 group is treated as off-limits for any move operation.
 
-Fail-safe default: if no config file exists, the guard is inactive and
-every playlist is considered modifiable (see README for details). Once a
-config file exists, any playlist that isn't classified into exactly one
-non-protected group is treated as not modifiable, since the mapping
-cannot be verified against Spotify's real folder structure automatically.
+Write commands require a config file. Once it exists, any playlist that isn't
+classified into exactly one non-protected group is treated as not modifiable,
+since the mapping cannot be verified against Spotify's real folder structure.
 """
 import os
 import tomllib
@@ -19,8 +17,7 @@ from pathlib import Path
 
 PROTECTED_GROUP = "protected"
 
-_xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-DEFAULT_GROUPS_PATH = _xdg_config / "spotify-tools-groups.toml"
+GROUPS_FILENAME = "spotify-tools-groups.toml"
 
 
 @dataclass
@@ -39,16 +36,52 @@ class ProtectedPlaylistError(Exception):
     """Raised when an operation targets a protected or unclassified playlist."""
 
 
-def load_rules(path: Path = DEFAULT_GROUPS_PATH) -> list[PlaylistRule]:
+def default_groups_path() -> Path:
+    """Return the XDG groups configuration path."""
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return config_home / GROUPS_FILENAME
+
+
+def resolve_groups_path() -> Path:
+    """Prefer a checkout-local groups file over the XDG configuration file."""
+    local = Path.cwd() / GROUPS_FILENAME
+    return local if local.is_file() else default_groups_path()
+
+
+def load_rules(path: Path | None = None) -> list[PlaylistRule]:
     """Load playlist group rules from a local TOML config.
 
-    Returns an empty list (guard inactive) if the file doesn't exist.
+    Returns an empty list if the selected file doesn't exist. Read-only
+    commands use this to mark every playlist as unclassified.
     """
+    path = path or resolve_groups_path()
     if not path.exists():
         return []
     with path.open("rb") as f:
         data = tomllib.load(f)
     return [_parse_rule(entry) for entry in data.get("playlists", [])]
+
+
+def require_rules() -> list[PlaylistRule]:
+    """Load non-empty rules required before a playlist write operation."""
+    path = resolve_groups_path()
+    if not path.is_file():
+        raise SystemExit(
+            "error: Playlist protection rules are missing. Create "
+            f"{default_groups_path()} or {Path.cwd() / GROUPS_FILENAME} "
+            "from spotify-tools-groups.toml.example before writing."
+        )
+    try:
+        rules = load_rules(path)
+    except (GroupConfigError, tomllib.TOMLDecodeError) as error:
+        raise SystemExit(
+            f"error: Invalid playlist protection rules: {error}"
+        ) from error
+    if not rules:
+        raise SystemExit(
+            f"error: {path} has no [[playlists]] rules; refusing to write."
+        )
+    return rules
 
 
 def _parse_rule(entry: dict[str, object]) -> PlaylistRule:
@@ -91,8 +124,9 @@ def is_modifiable(
 ) -> bool:
     """Return whether a playlist may be used as a move source/target.
 
-    Inactive (always True) when no rules are configured. Once rules exist,
-    only playlists classified into exactly one non-protected group qualify.
+    Write commands call ``require_rules`` before this function. Once rules
+    exist, only playlists classified into exactly one non-protected group
+    qualify. The empty-list behavior remains for read-only callers.
     """
     if not rules:
         return True

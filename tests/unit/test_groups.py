@@ -12,6 +12,7 @@ from spotify_tools.groups import (
     is_safe_new_target,
     load_rules,
     require_modifiable,
+    require_rules,
     require_safe_new_target,
 )
 
@@ -85,6 +86,39 @@ def test_is_modifiable_ignores_guard_when_no_rules_configured() -> None:
     assert is_modifiable("id-1", "Anything", []) is True
 
 
+def test_require_rules_accepts_checkout_local_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    (tmp_path / "spotify-tools-groups.toml").write_text(
+        '[[playlists]]\nid = "abc123"\ngroup = "active"\n'
+    )
+
+    assert require_rules() == [PlaylistRule(group="active", id="abc123")]
+
+
+def test_require_rules_explains_how_to_configure_missing_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+
+    with pytest.raises(SystemExit, match="Playlist protection rules are missing"):
+        require_rules()
+
+
+def test_require_rules_rejects_empty_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    (tmp_path / "spotify-tools-groups.toml").write_text("# no rules\n")
+
+    with pytest.raises(SystemExit, match=r"has no \[\[playlists\]\] rules"):
+        require_rules()
+
+
 def test_is_modifiable_rejects_protected_playlist() -> None:
     rules = [PlaylistRule(group="protected", id="id-1")]
     assert is_modifiable("id-1", "Family Shared", rules) is False
@@ -111,7 +145,7 @@ def test_require_modifiable_passes_silently_when_allowed() -> None:
     require_modifiable("id-1", "Anything", rules)
 
 
-def test_is_safe_new_target_ignores_guard_when_no_rules_configured() -> None:
+def test_is_safe_new_target_allows_new_target_when_no_rules_configured() -> None:
     assert is_safe_new_target("new-id", "Anything", []) is True
 
 

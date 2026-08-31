@@ -16,14 +16,14 @@ Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com
 
 **2. Configure credentials**
 
-If installed via `pipx`, place the credentials file at `~/.config/spotify-tools` (loaded automatically regardless of the current directory):
+Place credentials at `~/.config/spotify-tools` (loaded automatically regardless of the current directory):
 
 ~~~sh
 cp .env.example ~/.config/spotify-tools
 # Edit ~/.config/spotify-tools and fill in your Client ID / Client Secret
 ~~~
 
-If running directly with `uv`, a `.env` in the current directory also works:
+A `.env` in the current directory is also accepted and takes precedence, which is useful for checkout-local development:
 
 ~~~sh
 cp .env.example .env
@@ -66,7 +66,7 @@ pipx install --editable .
 uv run split-playlist
 ~~~
 
-On first run, a browser window opens for OAuth authentication. The token is cached and auto-refreshed on subsequent runs.
+On first run, a browser window opens for OAuth authentication. The token is cached and auto-refreshed on subsequent runs. Caches are stored in `${XDG_CACHE_HOME:-~/.cache}/spotify-tools/` (`oauth` for read/write and `oauth-readonly` for read-only access), not in the working directory.
 
 **Workflow:**
 
@@ -127,7 +127,7 @@ uv run reorder-by-key <playlist-id> keys.txt
 - Clockwise vs. counterclockwise is chosen automatically by checking which direction packs the playlist's actual keys into a tighter arc from the starting key
 - Within the same Camelot number, relative major/minor keys are treated as adjacent
 - Shows the planned order and asks for confirmation before writing (skip with `--yes`)
-- Refused if the target playlist is protected or unclassified under the Playlist Groups guard (when enabled)
+- Refused if the target playlist is protected or unclassified under the required Playlist Groups guard
 
 ## Playlist Groups
 
@@ -140,7 +140,7 @@ cp spotify-tools-groups.toml.example ~/.config/spotify-tools-groups.toml
 # Edit ~/.config/spotify-tools-groups.toml with your own playlist classification
 ~~~
 
-This file holds a personal mapping and is never committed to the repo (`~/.config/` lives outside it).
+For checkout-local development, `./spotify-tools-groups.toml` is also accepted and takes precedence. This file holds a personal mapping and is never committed to the repo (`~/.config/` lives outside it).
 
 **Example config:**
 
@@ -161,11 +161,12 @@ note = "Split into seasonal playlists after New Year"
 
 **Fail-safe behavior:**
 
-- If the config file doesn't exist, the guard is inactive — every playlist can be selected as a move source or target as before
-- If it exists, playlists in the `protected` group are excluded from both source and target selection, and rejected again right before the move executes
-- If it exists, a playlist that matches neither `id` nor `name` (unclassified), or matches more than one differing group (ambiguous), is excluded and rejected the same way
+- `spotify-inventory` works without this file and marks every playlist as unclassified, so it can be used to collect stable playlist IDs
+- Every write command refuses to start unless a non-empty config file is available
+- Playlists in the `protected` group are excluded from both source and target selection, and rejected again right before the move executes
+- A playlist that matches neither `id` nor `name` (unclassified), or matches more than one differing group (ambiguous), is excluded and rejected the same way
 - A playlist created on the fly during a split (as the new target) is exempt from the unclassified guard for *being unclassified*, but is still rejected if its name collides with a `protected` or ambiguous rule
-- Once the guard is active, Liked Songs is subject to it too: add a rule with `name = "Liked Songs"` to your config if you want to keep selecting it as a move source
+- Liked Songs is subject to the guard too: add a rule with `name = "Liked Songs"` to your config if you want to keep selecting it as a move source
 
 **Verification and known limits:**
 
