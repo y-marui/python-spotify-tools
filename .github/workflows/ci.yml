@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
       - uses: pre-commit/action@v3.0.1
         env:
           # powershell-lint is a local-only convenience check (see
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"] # EOLまで6ヶ月以上あるバージョン
+        python-version: ["3.11", "3.12", "3.13", "3.14"] # EOLまで6ヶ月以上あるバージョン
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.0.1
@@ -77,7 +77,7 @@ jobs:
       - run: echo "All Test matrix jobs passed."
 
   gate:
-    name: Required Checks
+    name: CI
     needs: [changes, security, test, build]
     if: always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest

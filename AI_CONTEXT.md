@@ -161,7 +161,7 @@ make update-charter # git subtree pull で dev-charter を最新化
 ```
 
 CI（GitHub Actions）は push / PR のたびに `security`（pre-commit） / `test`（`ruff check` →
-`mypy src` → `pytest`） → `build` → `gate`（`Required Checks`）を実行。docs-only の変更では
+`mypy src` → `pytest`） → `build` → `gate`（`CI`）を実行。docs-only の変更では
 `test`/`build` は自動スキップされる（`changes` job が判定）。`gate` が Branch Protection の
 必須ステータスチェック。
 
