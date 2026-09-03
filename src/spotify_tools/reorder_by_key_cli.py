@@ -5,6 +5,7 @@ applications (the Audio Features endpoint has been restricted since
 2024-11-27), so this command takes Camelot keys as an external input file
 rather than fetching them itself.
 """
+
 import argparse
 import sys
 from collections.abc import Sequence

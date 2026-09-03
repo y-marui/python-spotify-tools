@@ -10,6 +10,7 @@ Write commands require a config file. Once it exists, any playlist that isn't
 classified into exactly one non-protected group is treated as not modifiable,
 since the mapping cannot be verified against Spotify's real folder structure.
 """
+
 import os
 import tomllib
 from dataclasses import dataclass

@@ -6,6 +6,10 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   changes:
     name: Detect changes
@@ -46,7 +50,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - uses: pre-commit/action@v3.0.1
@@ -55,8 +59,23 @@ jobs:
           # .pre-commit-config.yaml); it isn't required to gate merges.
           SKIP: powershell-lint
 
+  lint:
+    name: Lint
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy src
+
   test:
-    name: Test
+    name: Test (pytest)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -68,22 +87,25 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv sync
-      - run: uv run ruff check .
-      - run: uv run mypy src
+      - run: uv sync --frozen
       - run: uv run pytest
 
   build:
     name: Build
-    needs: [changes, security, test]
+    needs: [changes, security, lint, test]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "All Test matrix jobs passed."
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run python -c "import spotify_tools"
 
   gate:
     name: CI
-    needs: [changes, security, test, build]
+    needs: [changes, security, lint, test, build]
     if: always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +119,7 @@ jobs:
             echo "docs/config-only change; nothing further to verify"
             exit 0
           fi
-          for result in "${{ needs.test.result }}" "${{ needs.build.result }}"; do
+          for result in "${{ needs.lint.result }}" "${{ needs.test.result }}" "${{ needs.build.result }}"; do
             if [ "$result" != "success" ]; then
               echo "::error::a required job did not succeed (got: $result)"
               exit 1

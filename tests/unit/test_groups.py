@@ -1,4 +1,5 @@
 """Tests for local playlist group/protection config."""
+
 from pathlib import Path
 
 import pytest

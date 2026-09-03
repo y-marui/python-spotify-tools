@@ -33,6 +33,10 @@ packages = ["src/spotify_tools"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+# docs/dev-charter/ is a git subtree we cannot edit directly (see
+# AI_CONTEXT.md); recent ruff formats fenced Python blocks in Markdown
+# by default, which would otherwise flag it.
+extend-exclude = ["docs/dev-charter"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

@@ -1,4 +1,5 @@
 """Playlist read/write operations."""
+
 from dataclasses import dataclass
 
 import spotipy
@@ -40,11 +41,13 @@ def list_playlists(sp: spotipy.Spotify) -> list[Playlist]:
     response = sp.current_user_playlists()
     while response:
         for p in response["items"]:
-            items.append(Playlist(
-                id=p["id"],
-                name=p["name"],
-                track_count=p["tracks"]["total"],
-            ))
+            items.append(
+                Playlist(
+                    id=p["id"],
+                    name=p["name"],
+                    track_count=p["tracks"]["total"],
+                )
+            )
         response = sp.next(response) if response["next"] else None
     return sorted(items, key=lambda p: p.name.lower())
 
@@ -58,11 +61,13 @@ def list_tracks(sp: spotipy.Spotify, playlist_id: str) -> list[Track]:
             t = item.get("track")
             if not t or t.get("is_local"):
                 continue
-            items.append(Track(
-                uri=t["uri"],
-                name=t["name"],
-                artists=", ".join(a["name"] for a in t["artists"]),
-            ))
+            items.append(
+                Track(
+                    uri=t["uri"],
+                    name=t["name"],
+                    artists=", ".join(a["name"] for a in t["artists"]),
+                )
+            )
         response = sp.next(response) if response["next"] else None
     return items
 
@@ -90,11 +95,13 @@ def list_saved_tracks(sp: spotipy.Spotify) -> list[Track]:
             t = item.get("track")
             if not t or t.get("is_local"):
                 continue
-            items.append(Track(
-                uri=t["uri"],
-                name=t["name"],
-                artists=", ".join(a["name"] for a in t["artists"]),
-            ))
+            items.append(
+                Track(
+                    uri=t["uri"],
+                    name=t["name"],
+                    artists=", ".join(a["name"] for a in t["artists"]),
+                )
+            )
         response = sp.next(response) if response["next"] else None
     return items
 

@@ -1,5 +1,6 @@
 """Tests for Liked Songs read/remove operations, and playlist metadata
 create/update/ownership helpers."""
+
 from typing import Any
 
 import pytest
@@ -131,7 +132,10 @@ def test_create_playlist_uses_current_user_playlist_create() -> None:
     sp = _FakeSpotifyForPlaylistOps()
 
     playlist = create_playlist(
-        sp, "New Playlist", description="desc", public=True  # type: ignore[arg-type]
+        sp,
+        "New Playlist",
+        description="desc",
+        public=True,  # type: ignore[arg-type]
     )
 
     assert playlist.id == "new-id"

@@ -1,4 +1,5 @@
 """CLI to create a new Spotify playlist or edit an existing playlist's metadata."""
+
 import argparse
 import sys
 from collections.abc import Sequence

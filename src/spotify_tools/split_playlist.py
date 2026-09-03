@@ -1,4 +1,5 @@
 """Interactive CLI to split a Spotify playlist into smaller ones."""
+
 import sys
 
 import spotipy

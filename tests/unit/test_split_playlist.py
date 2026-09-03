@@ -1,5 +1,6 @@
 """Tests for source dispatch between playlists and Liked Songs, and the
 playlist-group protection guard applied to move operations."""
+
 from typing import Any
 
 import pytest

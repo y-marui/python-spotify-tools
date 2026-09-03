@@ -1,4 +1,5 @@
 """CLI to export playlist/track inventory as Markdown or JSON (read-only)."""
+
 import argparse
 import json
 from collections.abc import Sequence

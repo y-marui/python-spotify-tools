@@ -1,4 +1,5 @@
 """Tests for inventory CLI filtering, formatting, and argument parsing."""
+
 import json
 from dataclasses import replace
 

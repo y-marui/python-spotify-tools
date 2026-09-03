@@ -1,4 +1,5 @@
 """Tests for Camelot key parsing and harmonic-mixing sort order."""
+
 import pytest
 
 from spotify_tools.camelot import (
@@ -44,8 +45,26 @@ def test_choose_direction_matches_manually_verified_real_playlist() -> None:
     keys = [
         parse_camelot(k)
         for k in [
-            "10B", "10A", "9B", "5A", "8B", "4A", "4B", "8B", "7A", "6A",
-            "8A", "1A", "6B", "7A", "7A", "5A", "8B", "9B", "1B", "7B",
+            "10B",
+            "10A",
+            "9B",
+            "5A",
+            "8B",
+            "4A",
+            "4B",
+            "8B",
+            "7A",
+            "6A",
+            "8A",
+            "1A",
+            "6B",
+            "7A",
+            "7A",
+            "5A",
+            "8B",
+            "9B",
+            "1B",
+            "7B",
         ]
     ]
     assert choose_direction(keys[0], keys) == "ccw"
@@ -66,13 +85,50 @@ def test_sort_order_matches_manually_verified_real_playlist_clockwise() -> None:
     keys = [
         parse_camelot(k)
         for k in [
-            "10B", "10A", "9B", "5A", "8B", "4A", "4B", "8B", "7A", "6A",
-            "8A", "1A", "6B", "7A", "7A", "5A", "8B", "9B", "1B", "7B",
+            "10B",
+            "10A",
+            "9B",
+            "5A",
+            "8B",
+            "4A",
+            "4B",
+            "8B",
+            "7A",
+            "6A",
+            "8A",
+            "1A",
+            "6B",
+            "7A",
+            "7A",
+            "5A",
+            "8B",
+            "9B",
+            "1B",
+            "7B",
         ]
     ]
 
     order = sort_order(keys[0], keys, direction="cw")
 
     assert order == [
-        0, 1, 18, 11, 6, 5, 3, 15, 12, 9, 19, 8, 13, 14, 4, 7, 16, 10, 2, 17,
+        0,
+        1,
+        18,
+        11,
+        6,
+        5,
+        3,
+        15,
+        12,
+        9,
+        19,
+        8,
+        13,
+        14,
+        4,
+        7,
+        16,
+        10,
+        2,
+        17,
     ]
