@@ -1,4 +1,5 @@
 """Tests for playlist reorder move computation and execution."""
+
 from typing import Any
 
 from spotify_tools.reorder import apply_moves, compute_moves

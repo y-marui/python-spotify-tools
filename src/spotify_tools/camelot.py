@@ -5,6 +5,7 @@ letter (A = minor, B = major) arranged so that harmonically compatible
 keys sit next to each other. Sorting a playlist by Camelot position from
 a chosen starting track keeps adjacent tracks in compatible keys.
 """
+
 from dataclasses import dataclass
 from typing import Literal
 

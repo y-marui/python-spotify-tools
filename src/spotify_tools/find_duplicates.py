@@ -1,4 +1,5 @@
 """Detect duplicate tracks across playlists matching a given prefix."""
+
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -64,9 +65,9 @@ def main() -> None:
             print(f"No playlists found with prefix '{prefix}'.")
             sys.exit(0)
     else:
-        confirm = input(
-            f"Search all {len(all_playlists)} playlists? [y/N] "
-        ).strip().lower()
+        confirm = (
+            input(f"Search all {len(all_playlists)} playlists? [y/N] ").strip().lower()
+        )
         if confirm != "y":
             print("Cancelled.")
             sys.exit(0)

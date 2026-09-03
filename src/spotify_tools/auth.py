@@ -1,4 +1,5 @@
 """Spotify OAuth authentication and credential discovery."""
+
 import os
 from pathlib import Path
 
@@ -6,20 +7,24 @@ import spotipy
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 
-_SCOPES = " ".join([
-    "playlist-read-private",
-    "playlist-read-collaborative",
-    "playlist-modify-public",
-    "playlist-modify-private",
-    "user-library-read",
-    "user-library-modify",
-])
+_SCOPES = " ".join(
+    [
+        "playlist-read-private",
+        "playlist-read-collaborative",
+        "playlist-modify-public",
+        "playlist-modify-private",
+        "user-library-read",
+        "user-library-modify",
+    ]
+)
 
-_READ_ONLY_SCOPES = " ".join([
-    "playlist-read-private",
-    "playlist-read-collaborative",
-    "user-library-read",
-])
+_READ_ONLY_SCOPES = " ".join(
+    [
+        "playlist-read-private",
+        "playlist-read-collaborative",
+        "user-library-read",
+    ]
+)
 
 
 def _credential_paths() -> tuple[Path, Path]:

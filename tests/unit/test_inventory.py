@@ -1,4 +1,5 @@
 """Tests for read-only playlist/track inventory export."""
+
 from typing import Any
 
 from spotify_tools.inventory import (
@@ -18,7 +19,9 @@ def _playlist(playlist_id: str, name: str, total: int) -> dict[str, Any]:
         "public": False,
         "description": "desc",
         "tracks": {"total": total},
-        "external_urls": {"spotify": f"https://open.spotify.com/playlist/{playlist_id}"},
+        "external_urls": {
+            "spotify": f"https://open.spotify.com/playlist/{playlist_id}"
+        },
         "snapshot_id": "snap-1",
     }
 

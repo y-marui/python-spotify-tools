@@ -1,4 +1,5 @@
 """Tests for the reorder-by-key CLI's key-file parsing."""
+
 from pathlib import Path
 
 import pytest

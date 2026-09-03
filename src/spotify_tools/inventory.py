@@ -1,4 +1,5 @@
 """Read-only export of playlist and track details."""
+
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any

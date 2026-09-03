@@ -1,5 +1,6 @@
 """Tests for the create/update playlist CLI: confirmation flow, and the
 ownership and playlist-group protection guards applied to updates."""
+
 from typing import Any
 
 import pytest
