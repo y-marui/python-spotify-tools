@@ -72,7 +72,7 @@ API → Service → Repository
 **確認不要（既存コードに合わせて進める）:**
 - コードスタイル / ファイル配置 / 軽微な実装詳細
 
-### Development Philosophy
+### Development Philosophy (`docs/dev-charter/topics/SOFTWARE_DESIGN_PRINCIPLES.md`)
 
 - まず小さなツールを構築する（段階的に拡張する）
 - ローカルファーストのデザインを優先する（外部サービス依存を避ける）
@@ -80,7 +80,7 @@ API → Service → Repository
 - **最小限の依存関係**: 新規依存追加前に既存の依存で解決できないか必ず検討する
 - オフライン機能を優先する（外部サービスなしで動作することを基本とする）
 
-### Code Design Principles
+### Code Design Principles (`docs/dev-charter/PRINCIPLES.md`)
 
 - **変更範囲は必要最小限**（Over-engineering しない）
 - **YAGNI**: 今必要ない機能は実装しない
