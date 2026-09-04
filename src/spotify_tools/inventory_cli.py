@@ -119,15 +119,15 @@ def playlists_command(
     name: Annotated[str | None, typer.Option(help="Exact name filter")] = None,
     prefix: Annotated[str | None, typer.Option(help="Name prefix filter")] = None,
     owner: Annotated[str | None, typer.Option(help="Owner display name filter")] = None,
-    format: Annotated[
-        OutputFormat, typer.Option(help="Output format")
+    output_format: Annotated[
+        OutputFormat, typer.Option("--format", help="Output format")
     ] = OutputFormat.md,
 ) -> None:
     sp = get_readonly_client()
     playlists = [get_liked_songs_info(sp), *list_playlist_infos(sp)]
     playlists = _filter_playlists(playlists, name, prefix, owner)
     playlists = _annotate_groups(playlists)
-    if format == OutputFormat.json:
+    if output_format == OutputFormat.json:
         print(_to_json(playlists))
     else:
         print(_format_playlists_markdown(playlists))
@@ -138,8 +138,8 @@ def tracks_command(
     playlist_id: Annotated[
         str, typer.Argument(help="Playlist ID, or 'liked' for Liked Songs")
     ],
-    format: Annotated[
-        OutputFormat, typer.Option(help="Output format")
+    output_format: Annotated[
+        OutputFormat, typer.Option("--format", help="Output format")
     ] = OutputFormat.md,
 ) -> None:
     sp = get_readonly_client()
@@ -147,7 +147,7 @@ def tracks_command(
         tracks = list_liked_song_infos(sp)
     else:
         tracks = list_playlist_track_infos(sp, playlist_id)
-    if format == OutputFormat.json:
+    if output_format == OutputFormat.json:
         print(_to_json(tracks))
     else:
         print(_format_tracks_markdown(tracks))
