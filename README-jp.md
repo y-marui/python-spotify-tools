@@ -60,6 +60,12 @@ pipx install --editable .
 
 ## Usage
 
+すべてのコマンドは `--version`/`-V`（バージョン表示）・`--help`/`-h`（ヘルプ表示）に対応する。また `--install-completion` を実行すると、現在使用中のシェル（zsh/bash/fish）向けの補完設定を自動で有効化できる:
+
+~~~sh
+uv run spotify-inventory --install-completion
+~~~
+
 ### split-playlist
 
 ~~~sh

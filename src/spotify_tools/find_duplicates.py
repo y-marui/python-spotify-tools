@@ -3,9 +3,24 @@
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Annotated
 
+import typer
+
+from spotify_tools import __version__
 from spotify_tools.auth import get_client
 from spotify_tools.playlist import Playlist, Track, list_playlists, list_tracks
+
+app = typer.Typer(
+    help="Detect duplicate tracks across playlists matching a given prefix.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"find-duplicates {__version__}")
+        raise typer.Exit()
 
 
 @dataclass
@@ -49,10 +64,26 @@ def _print_group(label: str, groups: dict[str, list[Occurrence]]) -> None:
             print(f"      {occ.playlist.name}  ({occ.track.uri})")
 
 
-def main() -> None:
-    if len(sys.argv) >= 2:
-        prefix = sys.argv[1]
-    else:
+@app.callback(invoke_without_command=True)
+def _find(
+    prefix: Annotated[
+        str | None,
+        typer.Argument(
+            help="Playlist name prefix filter (interactive prompt if omitted)"
+        ),
+    ] = None,
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            "-V",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the version and exit.",
+        ),
+    ] = False,
+) -> None:
+    if not prefix:
         prefix = input("Playlist prefix to search (Enter to search all): ").strip()
 
     sp = get_client()
@@ -88,6 +119,10 @@ def main() -> None:
     _print_group("Exact duplicates (same URI)", exact)
     print()
     _print_group("Fuzzy duplicates (same title+artist, different URI)", fuzzy)
+
+
+def main() -> None:
+    app()
 
 
 if __name__ == "__main__":

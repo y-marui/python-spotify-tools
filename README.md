@@ -60,6 +60,12 @@ pipx install --editable .
 
 ## Usage
 
+Every command supports `--version`/`-V` and `--help`/`-h`. Running `--install-completion` enables shell completion (zsh/bash/fish) for the shell you're currently using:
+
+~~~sh
+uv run spotify-inventory --install-completion
+~~~
+
 ### split-playlist
 
 ~~~sh

@@ -1,9 +1,12 @@
 """Interactive CLI to split a Spotify playlist into smaller ones."""
 
 import sys
+from typing import Annotated
 
 import spotipy
+import typer
 
+from spotify_tools import __version__
 from spotify_tools.auth import get_client
 from spotify_tools.groups import (
     PlaylistRule,
@@ -119,7 +122,31 @@ def _confirm_and_move(
     print(f"Done. {len(selected)} track(s) moved to '{target.name}'.")
 
 
-def main() -> None:
+app = typer.Typer(
+    help="Interactively split a Spotify playlist into smaller ones.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"split-playlist {__version__}")
+        raise typer.Exit()
+
+
+@app.callback(invoke_without_command=True)
+def _split(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            "-V",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the version and exit.",
+        ),
+    ] = False,
+) -> None:
     sp = get_client()
     rules = require_rules()
 
@@ -165,6 +192,10 @@ def main() -> None:
     target = _select_target(sp, target_choices)
 
     _confirm_and_move(sp, source, target, selected, rules, existing_target_ids)
+
+
+def main() -> None:
+    app()
 
 
 if __name__ == "__main__":
