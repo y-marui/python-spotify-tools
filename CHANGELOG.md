@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `--version`/`-V` on every CLI entry point, and zsh/bash/fish shell completion via `--install-completion`/`--show-completion` (dev-charter CLI Usability requirement, #34).
 - `spotify-playlist` command: `create` makes a new playlist and `update` edits an existing playlist's name/description/public/collaborative state, with an ownership guard and the Playlist Groups protection guard applied to `update`. Also migrates playlist creation off the deprecated `user_playlist_create(...)` to `current_user_playlist_create(...)`/`playlist_change_details(...)` (#20).
 - `reorder-by-key` command: reorders a playlist in-place into Camelot Wheel (harmonic-mixing) order from a manually supplied key file, auto-selecting clockwise/counterclockwise by which direction packs the playlist's actual keys more tightly. A stopgap until Spotify's Web API restores third-party access to track key data (Audio Features has been restricted for new apps since 2024-11-27).
 - `split-playlist` can now use Liked Songs as a move source, in addition to regular playlists (#14).
@@ -13,6 +14,7 @@
 - Further pre-commit hooks from the updated dev-charter (check-ai-context-reference, check-charter-subtree-edit, check-conventional-commit, check-dotenv-gitignore, check-language-pair-footer, check-language-pair-sync, check-license-exists, check-python-package-management, check-readme-placeholders).
 
 ### Changed
+- Migrated every CLI entry point from `argparse` (or raw `sys.argv` handling) to `typer`, per `docs/dev-charter/topics/PYTHON_CLI.md` (#34).
 - Updated `docs/dev-charter/` subtree to the latest version.
 - CI now runs the test job across a Python 3.11/3.12/3.13 matrix and uses `actions/checkout@v7` / `astral-sh/setup-uv@v8`.
 - Synced `AI_CONTEXT.md` (AI tool assignment format, pre-commit hook table, code review requirement) with the updated charter.

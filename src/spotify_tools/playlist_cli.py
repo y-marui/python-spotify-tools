@@ -1,11 +1,12 @@
 """CLI to create a new Spotify playlist or edit an existing playlist's metadata."""
 
-import argparse
 import sys
-from collections.abc import Sequence
+from typing import Annotated
 
 import spotipy
+import typer
 
+from spotify_tools import __version__
 from spotify_tools.auth import get_client
 from spotify_tools.groups import (
     PlaylistRule,
@@ -25,55 +26,32 @@ from spotify_tools.playlist import (
 # can only match group rules by name (no ID collides with this).
 _NEW_PLAYLIST_ID_PLACEHOLDER = ""
 
+app = typer.Typer(
+    help="Create a new Spotify playlist or edit an existing one's metadata.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
-def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Create a new Spotify playlist or edit an existing one's metadata."
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    create_parser = subparsers.add_parser("create", help="Create a new playlist")
-    create_parser.add_argument("name", help="Playlist name")
-    create_parser.add_argument(
-        "--description", default=None, help="Playlist description"
-    )
-    create_parser.add_argument(
-        "--public",
-        action="store_true",
-        help="Make the playlist public (default: private)",
-    )
-    create_parser.add_argument(
-        "--collaborative", action="store_true", help="Make the playlist collaborative"
-    )
-    create_parser.add_argument(
-        "--yes", action="store_true", help="Skip the confirmation prompt"
-    )
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"spotify-playlist {__version__}")
+        raise typer.Exit()
 
-    update_parser = subparsers.add_parser(
-        "update", help="Update an existing playlist's name/description/visibility"
-    )
-    update_parser.add_argument("playlist_id", help="Playlist ID to update")
-    update_parser.add_argument("--name", default=None, help="New name")
-    update_parser.add_argument("--description", default=None, help="New description")
-    visibility = update_parser.add_mutually_exclusive_group()
-    visibility.add_argument(
-        "--public", dest="public", action="store_true", default=None
-    )
-    visibility.add_argument(
-        "--private", dest="public", action="store_false", default=None
-    )
-    collaborative = update_parser.add_mutually_exclusive_group()
-    collaborative.add_argument(
-        "--collaborative", dest="collaborative", action="store_true", default=None
-    )
-    collaborative.add_argument(
-        "--no-collaborative", dest="collaborative", action="store_false", default=None
-    )
-    update_parser.add_argument(
-        "--yes", action="store_true", help="Skip the confirmation prompt"
-    )
 
-    return parser.parse_args(argv)
+@app.callback()
+def _cli(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            "-V",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the version and exit.",
+        ),
+    ] = False,
+) -> None:
+    pass
 
 
 def _confirm(prompt: str, skip: bool) -> bool:
@@ -109,33 +87,40 @@ def _verify_write(
 
 
 def _run_create(
-    args: argparse.Namespace, sp: spotipy.Spotify, rules: list[PlaylistRule]
+    sp: spotipy.Spotify,
+    rules: list[PlaylistRule],
+    *,
+    name: str,
+    description: str | None,
+    public: bool,
+    collaborative: bool,
+    yes: bool,
 ) -> None:
     print("Create playlist:")
-    print(f"  Name: {args.name}")
-    print(f"  Description: {args.description or '(none)'}")
-    print(f"  Public: {args.public}")
-    print(f"  Collaborative: {args.collaborative}")
+    print(f"  Name: {name}")
+    print(f"  Description: {description or '(none)'}")
+    print(f"  Public: {public}")
+    print(f"  Collaborative: {collaborative}")
 
-    require_safe_new_target(_NEW_PLAYLIST_ID_PLACEHOLDER, args.name, rules)
+    require_safe_new_target(_NEW_PLAYLIST_ID_PLACEHOLDER, name, rules)
 
-    if not _confirm("\nProceed?", args.yes):
+    if not _confirm("\nProceed?", yes):
         print("Cancelled.")
         sys.exit(0)
 
     playlist = create_playlist(
         sp,
-        args.name,
-        description=args.description,
-        public=args.public,
-        collaborative=args.collaborative,
+        name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
     )
 
     expected: dict[str, str | bool] = {
-        "name": args.name,
-        "description": args.description or "",
-        "public": args.public,
-        "collaborative": args.collaborative,
+        "name": name,
+        "description": description or "",
+        "public": public,
+        "collaborative": collaborative,
     }
     after = _verify_write(sp, playlist.id, expected)
     print(f"\nCreated '{after.name}' ({after.id}).")
@@ -144,16 +129,22 @@ def _run_create(
     print(f"  Collaborative: {after.collaborative}")
 
 
-def _requested_changes(args: argparse.Namespace) -> dict[str, str | bool]:
+def _requested_changes(
+    *,
+    name: str | None,
+    description: str | None,
+    public: bool | None,
+    collaborative: bool | None,
+) -> dict[str, str | bool]:
     changes: dict[str, str | bool] = {}
-    if args.name is not None:
-        changes["name"] = args.name
-    if args.description is not None:
-        changes["description"] = args.description
-    if args.public is not None:
-        changes["public"] = args.public
-    if args.collaborative is not None:
-        changes["collaborative"] = args.collaborative
+    if name is not None:
+        changes["name"] = name
+    if description is not None:
+        changes["description"] = description
+    if public is not None:
+        changes["public"] = public
+    if collaborative is not None:
+        changes["collaborative"] = collaborative
     return changes
 
 
@@ -184,9 +175,19 @@ def _expected_after_update(
 
 
 def _run_update(
-    args: argparse.Namespace, sp: spotipy.Spotify, rules: list[PlaylistRule]
+    sp: spotipy.Spotify,
+    rules: list[PlaylistRule],
+    *,
+    playlist_id: str,
+    name: str | None,
+    description: str | None,
+    public: bool | None,
+    collaborative: bool | None,
+    yes: bool,
 ) -> None:
-    changes = _requested_changes(args)
+    changes = _requested_changes(
+        name=name, description=description, public=public, collaborative=collaborative
+    )
     if not changes:
         print(
             "No fields to update; specify at least one of --name/--description/"
@@ -194,41 +195,102 @@ def _run_update(
         )
         sys.exit(1)
 
-    before = get_playlist_details(sp, args.playlist_id)
+    before = get_playlist_details(sp, playlist_id)
     current_user_id: str = sp.current_user()["id"]
     require_owned_by_current_user(before, current_user_id)
     require_modifiable(before.id, before.name, rules)
 
     _show_update_diff(before, changes)
-    if not _confirm("\nProceed?", args.yes):
+    if not _confirm("\nProceed?", yes):
         print("Cancelled.")
         sys.exit(0)
 
     update_playlist_details(
         sp,
-        args.playlist_id,
-        name=args.name,
-        description=args.description,
-        public=args.public,
-        collaborative=args.collaborative,
+        playlist_id,
+        name=name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
     )
 
     expected = _expected_after_update(before, changes)
-    after = _verify_write(sp, args.playlist_id, expected)
+    after = _verify_write(sp, playlist_id, expected)
     print(f"\nDone. '{after.name}' ({after.id}) updated.")
     print(f"  Description: {after.description or '(none)'}")
     print(f"  Public: {after.public}")
     print(f"  Collaborative: {after.collaborative}")
 
 
-def main(argv: Sequence[str] | None = None) -> None:
-    args = _parse_args(argv)
+@app.command("create", help="Create a new playlist")
+def create_command(
+    name: Annotated[str, typer.Argument(help="Playlist name")],
+    description: Annotated[
+        str | None, typer.Option(help="Playlist description")
+    ] = None,
+    public: Annotated[
+        bool,
+        typer.Option(help="Make the playlist public (default: private)"),
+    ] = False,
+    collaborative: Annotated[
+        bool, typer.Option(help="Make the playlist collaborative")
+    ] = False,
+    yes: Annotated[
+        bool, typer.Option("--yes", help="Skip the confirmation prompt")
+    ] = False,
+) -> None:
     sp = get_client()
     rules = require_rules()
-    if args.command == "create":
-        _run_create(args, sp, rules)
-    else:
-        _run_update(args, sp, rules)
+    _run_create(
+        sp,
+        rules,
+        name=name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
+        yes=yes,
+    )
+
+
+@app.command("update", help="Update an existing playlist's name/description/visibility")
+def update_command(
+    playlist_id: Annotated[str, typer.Argument(help="Playlist ID to update")],
+    name: Annotated[str | None, typer.Option(help="New name")] = None,
+    description: Annotated[str | None, typer.Option(help="New description")] = None,
+    public: Annotated[
+        bool | None,
+        typer.Option(
+            "--public/--private", help="Change visibility", show_default=False
+        ),
+    ] = None,
+    collaborative: Annotated[
+        bool | None,
+        typer.Option(
+            "--collaborative/--no-collaborative",
+            help="Change the collaborative flag",
+            show_default=False,
+        ),
+    ] = None,
+    yes: Annotated[
+        bool, typer.Option("--yes", help="Skip the confirmation prompt")
+    ] = False,
+) -> None:
+    sp = get_client()
+    rules = require_rules()
+    _run_update(
+        sp,
+        rules,
+        playlist_id=playlist_id,
+        name=name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
+        yes=yes,
+    )
+
+
+def main() -> None:
+    app()
 
 
 if __name__ == "__main__":

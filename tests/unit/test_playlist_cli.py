@@ -4,10 +4,13 @@ ownership and playlist-group protection guards applied to updates."""
 from typing import Any
 
 import pytest
+from typer.testing import CliRunner
 
 from spotify_tools.groups import PlaylistRule, ProtectedPlaylistError
 from spotify_tools.playlist import NotPlaylistOwnerError
-from spotify_tools.playlist_cli import _parse_args, _run_create, _run_update
+from spotify_tools.playlist_cli import _run_create, _run_update, app
+
+runner = CliRunner()
 
 
 class FakeSpotify:
@@ -73,6 +76,50 @@ def _playlist(
     }
 
 
+def _create(
+    sp: Any,
+    rules: list[PlaylistRule],
+    *,
+    name: str = "New Playlist",
+    description: str | None = None,
+    public: bool = False,
+    collaborative: bool = False,
+    yes: bool = False,
+) -> None:
+    _run_create(
+        sp,
+        rules,
+        name=name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
+        yes=yes,
+    )
+
+
+def _update(
+    sp: Any,
+    rules: list[PlaylistRule],
+    *,
+    playlist_id: str = "abc",
+    name: str | None = None,
+    description: str | None = None,
+    public: bool | None = None,
+    collaborative: bool | None = None,
+    yes: bool = False,
+) -> None:
+    _run_update(
+        sp,
+        rules,
+        playlist_id=playlist_id,
+        name=name,
+        description=description,
+        public=public,
+        collaborative=collaborative,
+        yes=yes,
+    )
+
+
 # --- create ---
 
 
@@ -81,9 +128,8 @@ def test_run_create_creates_playlist_after_confirmation(
 ) -> None:
     monkeypatch.setattr("builtins.input", lambda _: "y")
     sp = FakeSpotify(_playlist())
-    args = _parse_args(["create", "New Playlist", "--description", "desc"])
 
-    _run_create(args, sp, [])  # type: ignore[arg-type]
+    _create(sp, [], description="desc")  # type: ignore[arg-type]
 
     assert sp.created == {
         "name": "New Playlist",
@@ -98,10 +144,9 @@ def test_run_create_cancelled_when_not_confirmed(
 ) -> None:
     monkeypatch.setattr("builtins.input", lambda _: "n")
     sp = FakeSpotify(_playlist())
-    args = _parse_args(["create", "New Playlist"])
 
     with pytest.raises(SystemExit) as exc_info:
-        _run_create(args, sp, [])  # type: ignore[arg-type]
+        _create(sp, [])  # type: ignore[arg-type]
 
     assert exc_info.value.code == 0
     assert sp.created is None
@@ -113,10 +158,9 @@ def test_run_create_rejects_name_colliding_with_protected_rule(
     monkeypatch.setattr("builtins.input", lambda _: "y")
     sp = FakeSpotify(_playlist())
     rules = [PlaylistRule(group="protected", name="New Playlist")]
-    args = _parse_args(["create", "New Playlist"])
 
     with pytest.raises(ProtectedPlaylistError):
-        _run_create(args, sp, rules)  # type: ignore[arg-type]
+        _create(sp, rules)  # type: ignore[arg-type]
 
     assert sp.created is None
 
@@ -134,10 +178,9 @@ def test_run_create_rejects_protected_name_before_prompting(
     monkeypatch.setattr("builtins.input", _fail_if_called)
     sp = FakeSpotify(_playlist())
     rules = [PlaylistRule(group="protected", name="New Playlist")]
-    args = _parse_args(["create", "New Playlist"])
 
     with pytest.raises(ProtectedPlaylistError):
-        _run_create(args, sp, rules)  # type: ignore[arg-type]
+        _create(sp, rules)  # type: ignore[arg-type]
 
     assert sp.created is None
 
@@ -173,10 +216,9 @@ def test_run_create_warns_when_final_state_does_not_match(
             return {"id": "new-id", "name": name}
 
     sp = StaleCreateSpotify(_playlist())
-    args = _parse_args(["create", "New Playlist", "--public"])
 
     with pytest.raises(SystemExit) as exc_info:
-        _run_create(args, sp, [])  # type: ignore[arg-type]
+        _create(sp, [], public=True)  # type: ignore[arg-type]
 
     assert exc_info.value.code == 1
 
@@ -189,9 +231,8 @@ def test_run_update_updates_after_confirmation(
 ) -> None:
     monkeypatch.setattr("builtins.input", lambda _: "y")
     sp = FakeSpotify(_playlist())
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
-    _run_update(args, sp, [])  # type: ignore[arg-type]
+    _update(sp, [], name="New Name")  # type: ignore[arg-type]
 
     assert sp.changed is not None
     assert sp.changed["name"] == "New Name"
@@ -202,10 +243,9 @@ def test_run_update_cancelled_when_not_confirmed(
 ) -> None:
     monkeypatch.setattr("builtins.input", lambda _: "n")
     sp = FakeSpotify(_playlist())
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
     with pytest.raises(SystemExit) as exc_info:
-        _run_update(args, sp, [])  # type: ignore[arg-type]
+        _update(sp, [], name="New Name")  # type: ignore[arg-type]
 
     assert exc_info.value.code == 0
     assert sp.changed is None
@@ -213,10 +253,9 @@ def test_run_update_cancelled_when_not_confirmed(
 
 def test_run_update_requires_at_least_one_field() -> None:
     sp = FakeSpotify(_playlist())
-    args = _parse_args(["update", "abc"])
 
     with pytest.raises(SystemExit) as exc_info:
-        _run_update(args, sp, [])  # type: ignore[arg-type]
+        _update(sp, [])  # type: ignore[arg-type]
 
     assert exc_info.value.code == 1
     assert sp.changed is None
@@ -225,10 +264,9 @@ def test_run_update_requires_at_least_one_field() -> None:
 def test_run_update_rejects_non_owner(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("builtins.input", lambda _: "y")
     sp = FakeSpotify(_playlist(owner_id="someone-else"))
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
     with pytest.raises(NotPlaylistOwnerError):
-        _run_update(args, sp, [])  # type: ignore[arg-type]
+        _update(sp, [], name="New Name")  # type: ignore[arg-type]
 
     assert sp.changed is None
 
@@ -239,10 +277,9 @@ def test_run_update_rejects_protected_playlist(
     monkeypatch.setattr("builtins.input", lambda _: "y")
     sp = FakeSpotify(_playlist(playlist_id="abc", name="My Playlist"))
     rules = [PlaylistRule(group="protected", id="abc")]
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
     with pytest.raises(ProtectedPlaylistError):
-        _run_update(args, sp, rules)  # type: ignore[arg-type]
+        _update(sp, rules, name="New Name")  # type: ignore[arg-type]
 
     assert sp.changed is None
 
@@ -253,10 +290,9 @@ def test_run_update_rejects_unclassified_playlist(
     monkeypatch.setattr("builtins.input", lambda _: "y")
     sp = FakeSpotify(_playlist(playlist_id="abc", name="My Playlist"))
     rules = [PlaylistRule(group="active", id="other-id")]
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
     with pytest.raises(ProtectedPlaylistError):
-        _run_update(args, sp, rules)  # type: ignore[arg-type]
+        _update(sp, rules, name="New Name")  # type: ignore[arg-type]
 
     assert sp.changed is None
 
@@ -273,10 +309,9 @@ def test_run_update_rejects_ambiguous_playlist(
         PlaylistRule(group="active", id="abc"),
         PlaylistRule(group="future_target", name="My Playlist"),
     ]
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
     with pytest.raises(ProtectedPlaylistError):
-        _run_update(args, sp, rules)  # type: ignore[arg-type]
+        _update(sp, rules, name="New Name")  # type: ignore[arg-type]
 
     assert sp.changed is None
 
@@ -292,10 +327,9 @@ def test_run_update_warns_when_final_state_does_not_match(
             # Simulate the API silently not applying the change.
 
     sp = StaleSpotify(_playlist())
-    args = _parse_args(["update", "abc", "--name", "New Name"])
 
     with pytest.raises(SystemExit) as exc_info:
-        _run_update(args, sp, [])  # type: ignore[arg-type]
+        _update(sp, [], name="New Name")  # type: ignore[arg-type]
 
     assert exc_info.value.code == 1
 
@@ -316,9 +350,74 @@ def test_run_update_warns_on_unrequested_field_side_effect(
             self._playlist["public"] = False  # unrequested side effect
 
     sp = SideEffectSpotify(_playlist(public=True))
-    args = _parse_args(["update", "abc", "--collaborative"])
 
     with pytest.raises(SystemExit) as exc_info:
-        _run_update(args, sp, [])  # type: ignore[arg-type]
+        _update(sp, [], collaborative=True)  # type: ignore[arg-type]
 
     assert exc_info.value.code == 1
+
+
+# --- CLI wiring (typer option/argument parsing end-to-end) ---
+
+
+def test_create_command_wires_options_through_to_run_create(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    sp = FakeSpotify(_playlist())
+    monkeypatch.setattr("spotify_tools.playlist_cli.get_client", lambda: sp)
+    monkeypatch.setattr("spotify_tools.playlist_cli.require_rules", lambda: [])
+
+    result = runner.invoke(
+        app,
+        ["create", "New Playlist", "--description", "desc", "--public", "--yes"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert sp.created == {
+        "name": "New Playlist",
+        "public": True,
+        "collaborative": False,
+        "description": "desc",
+    }
+
+
+def test_update_command_wires_tri_state_flags_through_to_run_update(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sp = FakeSpotify(_playlist())
+    monkeypatch.setattr("spotify_tools.playlist_cli.get_client", lambda: sp)
+    monkeypatch.setattr("spotify_tools.playlist_cli.require_rules", lambda: [])
+
+    result = runner.invoke(
+        app, ["update", "abc", "--private", "--no-collaborative", "--yes"]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert sp.changed == {
+        "name": None,
+        "description": None,
+        "public": False,
+        "collaborative": False,
+    }
+
+
+def test_update_command_leaves_untouched_flags_as_none(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Neither --public/--private nor --collaborative/--no-collaborative is
+    passed, so both must reach _run_update as None (no change requested),
+    not default to False."""
+    sp = FakeSpotify(_playlist())
+    monkeypatch.setattr("spotify_tools.playlist_cli.get_client", lambda: sp)
+    monkeypatch.setattr("spotify_tools.playlist_cli.require_rules", lambda: [])
+
+    result = runner.invoke(app, ["update", "abc", "--name", "New Name", "--yes"])
+
+    assert result.exit_code == 0, result.output
+    assert sp.changed == {
+        "name": "New Name",
+        "description": None,
+        "public": None,
+        "collaborative": None,
+    }
