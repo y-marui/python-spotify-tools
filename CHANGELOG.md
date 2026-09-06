@@ -19,5 +19,6 @@
 - CI now runs the test job across a Python 3.11/3.12/3.13 matrix and uses `actions/checkout@v7` / `astral-sh/setup-uv@v8`.
 - Synced `AI_CONTEXT.md` (AI tool assignment format, pre-commit hook table, code review requirement) with the updated charter.
 - Removed `ai/context`, `ai/tasks`, and `ai/review` (not part of the dev-charter standard structure); folded their content into `docs/architecture.md`, `docs/development_rules.md`, and the new `CONTRIBUTING.md`. Also dropped the "`ai/context/` wins over `docs/` on conflict" rule, which allowed two sources of truth.
+- Synced `docs/dev-charter/` subtree to the `topics/<stack>/` restructure. `AI_CONTEXT.md`'s Tech Stack table now references `docs/dev-charter/topics/python/PYTHON_DEV_ENV.md` / `PYTHON_CLI.md` instead of restating the general policy.
 
 ### Fixed
