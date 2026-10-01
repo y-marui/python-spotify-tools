@@ -14,7 +14,7 @@
 - Further pre-commit hooks from the updated dev-charter (check-ai-context-reference, check-charter-subtree-edit, check-conventional-commit, check-dotenv-gitignore, check-language-pair-footer, check-language-pair-sync, check-license-exists, check-python-package-management, check-readme-placeholders).
 
 ### Changed
-- Migrated every CLI entry point from `argparse` (or raw `sys.argv` handling) to `typer`, per `docs/dev-charter/topics/PYTHON_CLI.md` (#34).
+- Migrated every CLI entry point from `argparse` (or raw `sys.argv` handling) to `typer`, per `docs/dev-charter/topics/python/PYTHON_CLI.md` (#34).
 - Updated `docs/dev-charter/` subtree to the latest version.
 - CI now runs the test job across a Python 3.11/3.12/3.13 matrix and uses `actions/checkout@v7` / `astral-sh/setup-uv@v8`.
 - Synced `AI_CONTEXT.md` (AI tool assignment format, pre-commit hook table, code review requirement) with the updated charter.
