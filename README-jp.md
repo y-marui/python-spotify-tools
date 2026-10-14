@@ -84,6 +84,19 @@ uv run split-playlist
 3. 移動先プレイリストを選択（新規作成も可）
 4. 確認後に実行
 
+### reconcile-liked
+
+プレイリストに既に入っている Liked Songs を削除する。既定は読み取り専用のプレビュー（読み取り専用スコープ）で、対象プレイリストには一切書き込まない。
+
+~~~sh
+uv run reconcile-liked <playlist-id>           # プレビュー
+uv run reconcile-liked <playlist-id> --apply   # 確認後に削除
+~~~
+
+- URI が完全一致する曲は 1 回の確認で削除できる（`--yes` で省略可）。
+- 別 URI の同一録音（ISRC で判定し、再生時間を併記）は、1 曲ずつ確認した場合のみ削除する。タイトルだけが同じ曲、リマスター、ライブ版は同一曲とみなさない。
+- `--apply` では、対象が自分の所有で、Playlist Groups の保護ルールを通過する必要がある。削除直前に対象を再取得し、残すべき曲が消えていた場合はスキップし、削除後に Liked Songs を再取得して残存分を報告する。
+
 ### spotify-inventory
 
 Spotify 上のデータを一切変更しない読み取り専用コマンド。プレイリスト一覧・曲一覧を Markdown または JSON で出力する。認証には読み取り専用スコープのみを要求する。

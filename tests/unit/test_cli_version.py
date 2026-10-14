@@ -8,6 +8,7 @@ from spotify_tools import __version__
 from spotify_tools.find_duplicates import app as find_duplicates_app
 from spotify_tools.inventory_cli import app as inventory_app
 from spotify_tools.playlist_cli import app as playlist_app
+from spotify_tools.reconcile_liked import app as reconcile_app
 from spotify_tools.reorder_by_key_cli import app as reorder_app
 from spotify_tools.split_playlist import app as split_playlist_app
 
@@ -19,6 +20,7 @@ _APPS = [
     ("reorder-by-key", reorder_app),
     ("split-playlist", split_playlist_app),
     ("find-duplicates", find_duplicates_app),
+    ("reconcile-liked", reconcile_app),
 ]
 
 
