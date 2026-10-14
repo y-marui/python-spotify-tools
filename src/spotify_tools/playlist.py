@@ -1,6 +1,7 @@
 """Playlist read/write operations."""
 
 from dataclasses import dataclass
+from typing import Any
 
 import spotipy
 
@@ -19,6 +20,8 @@ class Track:
     uri: str
     name: str
     artists: str
+    isrc: str | None = None
+    duration_ms: int | None = None
 
 
 @dataclass
@@ -33,6 +36,17 @@ class PlaylistDetails:
 
 class NotPlaylistOwnerError(Exception):
     """Raised when an operation targets a playlist not owned by the current user."""
+
+
+def _to_track(t: dict[str, Any]) -> Track:
+    isrc = (t.get("external_ids") or {}).get("isrc")
+    return Track(
+        uri=t["uri"],
+        name=t["name"],
+        artists=", ".join(a["name"] for a in t["artists"]),
+        isrc=isrc.upper() if isrc else None,
+        duration_ms=t.get("duration_ms"),
+    )
 
 
 def list_playlists(sp: spotipy.Spotify) -> list[Playlist]:
@@ -61,13 +75,7 @@ def list_tracks(sp: spotipy.Spotify, playlist_id: str) -> list[Track]:
             t = item.get("track")
             if not t or t.get("is_local"):
                 continue
-            items.append(
-                Track(
-                    uri=t["uri"],
-                    name=t["name"],
-                    artists=", ".join(a["name"] for a in t["artists"]),
-                )
-            )
+            items.append(_to_track(t))
         response = sp.next(response) if response["next"] else None
     return items
 
@@ -95,13 +103,7 @@ def list_saved_tracks(sp: spotipy.Spotify) -> list[Track]:
             t = item.get("track")
             if not t or t.get("is_local"):
                 continue
-            items.append(
-                Track(
-                    uri=t["uri"],
-                    name=t["name"],
-                    artists=", ".join(a["name"] for a in t["artists"]),
-                )
-            )
+            items.append(_to_track(t))
         response = sp.next(response) if response["next"] else None
     return items
 

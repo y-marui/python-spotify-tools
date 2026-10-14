@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `reconcile-liked` command: preview-first removal of Liked Songs already present in a playlist. Exact URI matches and ISRC-matched alternate releases (per-track confirmation) are handled with ownership/group guards, target re-verification before removal, and a post-removal report of remaining tracks (#47).
 - `--version`/`-V` on every CLI entry point, and zsh/bash/fish shell completion via `--install-completion`/`--show-completion` (dev-charter CLI Usability requirement, #34).
 - `spotify-playlist` command: `create` makes a new playlist and `update` edits an existing playlist's name/description/public/collaborative state, with an ownership guard and the Playlist Groups protection guard applied to `update`. Also migrates playlist creation off the deprecated `user_playlist_create(...)` to `current_user_playlist_create(...)`/`playlist_change_details(...)` (#20).
 - `reorder-by-key` command: reorders a playlist in-place into Camelot Wheel (harmonic-mixing) order from a manually supplied key file, auto-selecting clockwise/counterclockwise by which direction packs the playlist's actual keys more tightly. A stopgap until Spotify's Web API restores third-party access to track key data (Audio Features has been restricted for new apps since 2024-11-27).

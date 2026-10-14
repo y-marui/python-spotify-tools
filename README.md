@@ -84,6 +84,19 @@ On first run, a browser window opens for OAuth authentication. The token is cach
 3. Select or create a target playlist
 4. Confirm to execute
 
+### reconcile-liked
+
+Removes Liked Songs that a playlist already holds. The default is a read-only preview (read-only OAuth scope); the target playlist is never written to.
+
+~~~sh
+uv run reconcile-liked <playlist-id>           # preview
+uv run reconcile-liked <playlist-id> --apply   # remove after confirmation
+~~~
+
+- Exact URI matches are removable after one confirmation (`--yes` skips it).
+- Same recording under a different URI (matched by ISRC, shown with duration) is removed only after per-track confirmation. Title-only matches, remasters, and live versions are never treated as the same song.
+- With `--apply`, the target must be owned by you and pass the Playlist Groups guard. The target is re-read right before removal, tracks whose retained copy vanished are skipped, and Liked Songs is re-read afterwards to report anything that remains.
+
 ### spotify-inventory
 
 A read-only command that never modifies data on Spotify. Exports playlist and track listings as Markdown or JSON, and requests only read-only OAuth scopes.
