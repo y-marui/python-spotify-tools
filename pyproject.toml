@@ -20,7 +20,7 @@ reconcile-liked = "spotify_tools.reconcile_liked:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.3",
+    "pytest>=9.2.0",
     "ruff>=0.17.2",
     "mypy>=2.4.1",
 ]
