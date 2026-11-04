@@ -214,12 +214,11 @@ pre-commit run --all-files  # 動作確認（必須）
 
 ## AI Tool Assignments
 
-- **使用ツール**：Claude Code、GitHub Copilot、Gemini CLI
+- **使用ツール**：Claude Code、GitHub Copilot
 - **標準担当の正本**：`docs/dev-charter/AI_COLLABORATION_RULES.md` の「AI Tool Responsibilities」と「Rules for Multi-AI Usage」
 - **このリポジトリ固有の上書き**：
   - Codex 未使用のため、標準で Codex が担当するバグ修正・コードレビューは GitHub Copilot が兼務する
   - GitHub Copilot: 単体テスト作成も担当する
-  - Gemini CLI: プライバシーポリシー作成・更新、ストア説明文、審査用ドキュメントに加え、プロジェクト全体のドキュメント管理も担当する
 
 **AI_CONTEXT.md の同期ルール:**
 - 憲章（`docs/dev-charter/`）を `git subtree pull` で更新した後、AI に差分を確認させて `AI_CONTEXT.md` を更新する
@@ -227,7 +226,6 @@ pre-commit run --all-files  # 動作確認（必須）
 **AI 並用時のルール:**
 - Claude Code 作業中は Copilot 提案を**参考程度**に（盲目的に受け入れない）
 - Copilot の提案がプロジェクト規約に反する場合は無視し、Claude Code でレビュー後に採用判断する
-- Gemini CLI は `GEMINI.md` 経由で `@AI_CONTEXT.md` の自動読み込みをサポート
 
 ---
 
