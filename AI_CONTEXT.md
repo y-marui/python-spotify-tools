@@ -202,7 +202,7 @@ cp docs/dev-charter/.gitleaks.toml .
 # core.hooksPath が設定済みの場合は pre-commit install 不要
 git config core.hooksPath 2>/dev/null \
   && echo "core.hooksPath 設定済み。次のコマンドで確認:" \
-  || pre-commit install
+  || { pre-commit install; pre-commit install --hook-type pre-push; }
 pre-commit run --all-files  # 動作確認（必須）
 ```
 
